@@ -45,35 +45,6 @@ document.addEventListener('DOMContentLoaded', function() {
         lastScroll = currentScroll;
     });
     
-    // Form submission handling
-    const quoteForm = document.querySelector('.quote-form');
-    if (quoteForm) {
-        quoteForm.addEventListener('submit', function(e) {
-            // Show loading state
-            const submitBtn = quoteForm.querySelector('.btn-submit');
-            const originalText = submitBtn.textContent;
-            submitBtn.textContent = 'Sending...';
-            submitBtn.disabled = true;
-            
-            // Note: In production, replace the form action with your actual form endpoint
-            // like Formspree, Netlify Forms, or your own backend
-        });
-    }
-    
-    // Phone number formatting
-    const phoneInput = document.getElementById('phone');
-    if (phoneInput) {
-        phoneInput.addEventListener('input', function(e) {
-            let value = e.target.value.replace(/\D/g, '');
-            if (value.length >= 6) {
-                value = `(${value.slice(0, 3)}) ${value.slice(3, 6)}-${value.slice(6, 10)}`;
-            } else if (value.length >= 3) {
-                value = `(${value.slice(0, 3)}) ${value.slice(3)}`;
-            }
-            e.target.value = value;
-        });
-    }
-    
     // Add animation on scroll
     const observerOptions = {
         root: null,

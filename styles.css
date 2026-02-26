@@ -455,67 +455,6 @@ body {
     font-size: 1.1rem;
 }
 
-/* Quote Form */
-.quote-form {
-    background: var(--bg);
-    padding: 2rem;
-    border-radius: 12px;
-    box-shadow: var(--shadow);
-    margin-bottom: 2rem;
-    text-align: left;
-}
-
-.form-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 1rem;
-}
-
-.form-group {
-    margin-bottom: 1rem;
-}
-
-.form-group.full-width {
-    grid-column: 1 / -1;
-}
-
-.form-group label {
-    display: block;
-    margin-bottom: 0.5rem;
-    font-weight: 500;
-    color: var(--text);
-}
-
-.form-group input,
-.form-group select,
-.form-group textarea {
-    width: 100%;
-    padding: 0.75rem;
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    font-size: 1rem;
-    font-family: inherit;
-    transition: border-color 0.2s;
-}
-
-.form-group input:focus,
-.form-group select:focus,
-.form-group textarea:focus {
-    outline: none;
-    border-color: var(--accent);
-}
-
-.btn-submit {
-    width: 100%;
-    justify-content: center;
-}
-
-.form-note {
-    text-align: center;
-    color: var(--text-muted);
-    font-size: 0.85rem;
-    margin-top: 1rem;
-}
 
 .cta-alternative {
     margin-top: 2rem;
@@ -530,25 +469,20 @@ body {
 .footer {
     background: var(--primary);
     color: var(--bg);
-    padding: 4rem 2rem 2rem;
 }
 
-.footer-content {
+.footer-columns {
     display: grid;
-    grid-template-columns: 2fr 1fr 1fr 1fr;
-    gap: 3rem;
-    margin-bottom: 3rem;
+    grid-template-columns: 1fr 1fr 1fr;
 }
 
-.footer-logo {
-    height: 80px;
-    width: auto;
-    margin-bottom: 1rem;
+.footer-column {
+    padding: 3rem 4rem;
+    border-right: 1px solid rgba(255,255,255,0.1);
 }
 
-.footer-brand p {
-    color: rgba(255,255,255,0.7);
-    max-width: 300px;
+.footer-column:last-child {
+    border-right: none;
 }
 
 .footer-column h4 {
@@ -580,7 +514,7 @@ body {
 
 .footer-bottom {
     border-top: 1px solid rgba(255,255,255,0.1);
-    padding-top: 2rem;
+    padding: 2rem;
     text-align: center;
     color: rgba(255,255,255,0.5);
 }
@@ -595,10 +529,6 @@ body {
     .about-content {
         grid-template-columns: 1fr;
         gap: 2rem;
-    }
-    
-    .footer-content {
-        grid-template-columns: 1fr 1fr;
     }
 }
 
@@ -632,17 +562,19 @@ body {
         gap: 1rem;
     }
     
-    .form-row {
+    .footer-columns {
         grid-template-columns: 1fr;
     }
-    
-    .footer-content {
-        grid-template-columns: 1fr;
+
+    .footer-column {
+        border-right: none;
+        border-bottom: 1px solid rgba(255,255,255,0.1);
         text-align: center;
+        padding: 2rem;
     }
-    
-    .footer-brand p {
-        max-width: 100%;
+
+    .footer-column:last-child {
+        border-bottom: none;
     }
 }
 
