@@ -1,0 +1,1538 @@
+<!--
+  ╔══════════════════════════════════════════════════════════════════╗
+  ║  Liberty Fencing — Interactive Fence Designer                    ║
+  ╠══════════════════════════════════════════════════════════════════╣
+  ║  STANDALONE PAGE  →  /fence-designer.html                        ║
+  ║  Works as its own page OR embedded as an iframe.                 ║
+  ║                                                                  ║
+  ║  EMBED ON ANY PAGE:                                              ║
+  ║  <iframe                                                         ║
+  ║    src="/fence-designer.html"                                    ║
+  ║    width="100%" height="600"                                     ║
+  ║    style="border:none;border-radius:12px"                        ║
+  ║    title="Liberty Fencing Designer"                              ║
+  ║  ></iframe>                                                      ║
+  ║                                                                  ║
+  ║  SEND TO A LEAD VIA SMS/EMAIL:                                   ║
+  ║  The share link looks like:                                      ║
+  ║  https://liberty-fencing.com/fence-designer.html#BASE64_STATE   ║
+  ║  The customer's design is encoded in the # fragment.             ║
+  ║  Works in SMS, email, and iMessage links.                        ║
+  ║                                                                  ║
+  ║  CONFIGURE:                                                      ║
+  ║  Set CONFIG.webhookUrl near the top of the <script> block        ║
+  ║  to your lead intake endpoint (FencepostOS, Zapier, etc.)        ║
+  ╚══════════════════════════════════════════════════════════════════╝
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Design Your Fence | Liberty Fencing</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #1a1a1a;
+      --accent: #f4a818;
+      --accent-dark: #d48c0c;
+      --panel-bg: #fff;
+      --panel-border: #e0e0e0;
+      --text: #1a1a1a;
+      --text-light: #666;
+      --radius: 8px;
+      --shadow: 0 4px 20px rgba(0,0,0,0.15);
+      --panel-w: 300px;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Inter', -apple-system, sans-serif;
+      height: 100dvh;
+      overflow: hidden;
+      background: #1a1a1a;
+    }
+
+    /* ── Map ─────────────────────────────────────────────────────── */
+    #map {
+      position: fixed;
+      top: 0; right: 0; bottom: 0;
+      left: var(--panel-w);
+      z-index: 1;
+    }
+
+    /* ── Search bar ──────────────────────────────────────────────── */
+    #search-bar {
+      position: fixed;
+      top: 12px;
+      left: calc(var(--panel-w) + 50%);
+      transform: translateX(-50%);
+      z-index: 1100;
+      display: flex;
+      gap: 6px;
+      background: #fff;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 6px;
+      width: min(440px, calc(100vw - var(--panel-w) - 32px));
+    }
+
+    #address-input {
+      flex: 1;
+      border: none;
+      outline: none;
+      font-family: inherit;
+      font-size: 0.875rem;
+      padding: 6px 8px;
+      color: var(--text);
+    }
+
+    #search-btn {
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      padding: 6px 14px;
+      font-family: inherit;
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    #search-btn:hover { background: var(--accent-dark); }
+
+    /* ── Panel ───────────────────────────────────────────────────── */
+    #panel {
+      position: fixed;
+      top: 0; left: 0; bottom: 0;
+      width: var(--panel-w);
+      background: var(--panel-bg);
+      border-right: 1px solid var(--panel-border);
+      z-index: 1000;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    #panel-header {
+      padding: 14px 16px 10px;
+      border-bottom: 1px solid var(--panel-border);
+      background: var(--primary);
+      color: #fff;
+      flex-shrink: 0;
+    }
+
+    #panel-header .logo-line {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 4px;
+    }
+
+    #panel-header .logo-line span {
+      font-size: 0.85rem;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+    }
+
+    #panel-header .logo-line .accent { color: var(--accent); }
+
+    #panel-header p {
+      font-size: 0.72rem;
+      color: rgba(255,255,255,0.6);
+    }
+
+    #panel-scroll {
+      flex: 1;
+      overflow-y: auto;
+      padding: 14px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    /* Mode toolbar */
+    .section-label {
+      font-size: 0.68rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: var(--text-light);
+      margin-bottom: 6px;
+    }
+
+    #mode-toolbar {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 6px;
+    }
+
+    .mode-btn {
+      padding: 8px 4px;
+      border: 1.5px solid var(--panel-border);
+      border-radius: var(--radius);
+      background: #fff;
+      font-family: inherit;
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: var(--text-light);
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.15s;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+    }
+
+    .mode-btn .mode-icon { font-size: 1.2rem; }
+
+    .mode-btn:hover {
+      border-color: var(--accent);
+      color: var(--accent-dark);
+    }
+
+    .mode-btn.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+
+    /* Hint bar */
+    #hint-bar {
+      background: #f0f7ff;
+      border: 1px solid #c8e0f8;
+      border-radius: 6px;
+      padding: 8px 10px;
+      font-size: 0.72rem;
+      color: #1a5276;
+      line-height: 1.4;
+    }
+
+    /* Fence type selector */
+    #fence-type-btns {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .fence-type-btn {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 10px;
+      border: 1.5px solid var(--panel-border);
+      border-radius: var(--radius);
+      background: #fff;
+      cursor: pointer;
+      font-family: inherit;
+      text-align: left;
+      transition: all 0.15s;
+    }
+
+    .fence-type-btn .swatch {
+      width: 16px;
+      height: 16px;
+      border-radius: 3px;
+      flex-shrink: 0;
+      border: 1.5px solid rgba(0,0,0,0.15);
+    }
+
+    .fence-type-btn .type-info { flex: 1; }
+    .fence-type-btn .type-name { font-size: 0.8rem; font-weight: 600; color: var(--text); display: block; }
+    .fence-type-btn .type-price { font-size: 0.68rem; color: var(--text-light); }
+
+    .fence-type-btn:hover { border-color: var(--accent); }
+    .fence-type-btn.active {
+      border-color: var(--accent);
+      background: #fff8ec;
+    }
+
+    /* Gate type selector */
+    #gate-type-btns {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+    }
+
+    .gate-type-btn {
+      padding: 10px 6px;
+      border: 1.5px solid var(--panel-border);
+      border-radius: var(--radius);
+      background: #fff;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-align: center;
+      color: var(--text-light);
+      transition: all 0.15s;
+    }
+
+    .gate-type-btn .gate-icon { font-size: 1.3rem; display: block; margin-bottom: 3px; }
+    .gate-type-btn:hover { border-color: var(--accent); }
+    .gate-type-btn.active { border-color: var(--accent); background: #fff8ec; color: var(--primary); }
+
+    /* Estimate */
+    #estimate-list {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      min-height: 40px;
+    }
+
+    .estimate-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.75rem;
+      padding: 6px 8px;
+      background: #f8f9fa;
+      border-radius: 6px;
+    }
+
+    .estimate-row .e-swatch {
+      width: 10px; height: 10px;
+      border-radius: 2px;
+      flex-shrink: 0;
+    }
+
+    .estimate-row .e-label { flex: 1; color: var(--text); line-height: 1.3; }
+    .estimate-row .e-cost { font-weight: 700; color: var(--primary); white-space: nowrap; }
+
+    .estimate-row.gate-row { background: #f0f7ec; }
+    .estimate-row.gate-row .e-swatch { background: var(--accent); }
+
+    #estimate-empty {
+      font-size: 0.75rem;
+      color: var(--text-light);
+      text-align: center;
+      padding: 10px 0;
+    }
+
+    #estimate-total-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      padding: 10px 8px 4px;
+      border-top: 2px solid var(--panel-border);
+    }
+
+    #estimate-total-row .total-label {
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--text-light);
+    }
+
+    #estimate-total-row .total-value {
+      font-size: 1.1rem;
+      font-weight: 800;
+      color: var(--primary);
+    }
+
+    #estimate-note {
+      font-size: 0.65rem;
+      color: var(--text-light);
+      line-height: 1.4;
+    }
+
+    /* Actions */
+    #panel-actions {
+      padding: 12px;
+      border-top: 1px solid var(--panel-border);
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+      flex-shrink: 0;
+    }
+
+    .action-btn {
+      width: 100%;
+      padding: 10px;
+      border-radius: var(--radius);
+      border: none;
+      font-family: inherit;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    #quote-btn {
+      background: var(--accent);
+      color: #fff;
+      font-size: 0.9rem;
+      padding: 12px;
+    }
+
+    #quote-btn:hover { background: var(--accent-dark); }
+
+    #share-btn {
+      background: var(--primary);
+      color: #fff;
+    }
+
+    #share-btn:hover { background: #333; }
+
+    #clear-btn {
+      background: #fff;
+      color: #e74c3c;
+      border: 1.5px solid #fcc;
+    }
+
+    #clear-btn:hover { background: #fff5f5; }
+
+    /* ── Toast ───────────────────────────────────────────────────── */
+    #toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(80px);
+      background: var(--primary);
+      color: #fff;
+      padding: 10px 20px;
+      border-radius: 20px;
+      font-size: 0.82rem;
+      font-weight: 500;
+      z-index: 9999;
+      transition: transform 0.3s ease;
+      pointer-events: none;
+      white-space: nowrap;
+    }
+
+    #toast.show { transform: translateX(-50%) translateY(0); }
+
+    /* ── Snap indicator ──────────────────────────────────────────── */
+    .snap-circle {
+      width: 14px; height: 14px;
+      background: var(--accent);
+      border: 2px solid #fff;
+      border-radius: 50%;
+      margin: -7px 0 0 -7px;
+    }
+
+    /* ── Gate marker ─────────────────────────────────────────────── */
+    .gate-marker {
+      background: var(--accent);
+      border: 2px solid var(--primary);
+      border-radius: 3px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 9px;
+      font-weight: 700;
+      color: var(--primary);
+      cursor: pointer;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+    }
+
+    /* ── Quote Modal ─────────────────────────────────────────────── */
+    #quote-modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.6);
+      z-index: 9000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+
+    #quote-modal.hidden { display: none; }
+
+    .modal-box {
+      background: #fff;
+      border-radius: 12px;
+      padding: 28px 24px;
+      width: 100%;
+      max-width: 400px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    }
+
+    .modal-box h2 {
+      font-size: 1.2rem;
+      font-weight: 800;
+      color: var(--primary);
+      margin-bottom: 4px;
+    }
+
+    .modal-box .modal-sub {
+      font-size: 0.8rem;
+      color: var(--text-light);
+      margin-bottom: 20px;
+    }
+
+    .modal-estimate-preview {
+      background: #f8f9fa;
+      border-radius: var(--radius);
+      padding: 10px 12px;
+      margin-bottom: 18px;
+      font-size: 0.78rem;
+      color: var(--text-light);
+    }
+
+    .modal-estimate-preview strong {
+      display: block;
+      font-size: 1.05rem;
+      color: var(--primary);
+      margin-top: 2px;
+    }
+
+    #quote-form {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .form-field {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .form-field label {
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: var(--text-light);
+    }
+
+    .form-field input {
+      padding: 10px 12px;
+      border: 1.5px solid var(--panel-border);
+      border-radius: var(--radius);
+      font-family: inherit;
+      font-size: 0.875rem;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    .form-field input:focus { border-color: var(--accent); }
+
+    .modal-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 16px;
+    }
+
+    #form-cancel {
+      flex: 1;
+      padding: 11px;
+      border: 1.5px solid var(--panel-border);
+      border-radius: var(--radius);
+      background: #fff;
+      font-family: inherit;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      color: var(--text-light);
+    }
+
+    #form-submit {
+      flex: 2;
+      padding: 11px;
+      border: none;
+      border-radius: var(--radius);
+      background: var(--accent);
+      color: #fff;
+      font-family: inherit;
+      font-size: 0.875rem;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    #form-submit:hover { background: var(--accent-dark); }
+    #form-submit:disabled { background: #ccc; cursor: default; }
+
+    .success-box {
+      text-align: center;
+      padding: 20px 0;
+    }
+
+    .success-box .success-icon { font-size: 3rem; margin-bottom: 12px; }
+
+    .success-box h3 {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--primary);
+      margin-bottom: 8px;
+    }
+
+    .success-box p {
+      font-size: 0.82rem;
+      color: var(--text-light);
+      line-height: 1.5;
+    }
+
+    /* ── Mobile ──────────────────────────────────────────────────── */
+    #mobile-toggle {
+      display: none;
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      z-index: 2000;
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      background: var(--primary);
+      color: #fff;
+      border: none;
+      font-size: 1.3rem;
+      cursor: pointer;
+      box-shadow: var(--shadow);
+      align-items: center;
+      justify-content: center;
+    }
+
+    @media (max-width: 640px) {
+      :root { --panel-w: 0px; }
+
+      #map { left: 0; }
+
+      #search-bar {
+        top: 8px;
+        left: 8px;
+        right: 8px;
+        transform: none;
+        width: auto;
+      }
+
+      #panel {
+        top: auto;
+        left: 0; right: 0;
+        width: 100%;
+        height: auto;
+        max-height: 55dvh;
+        border-right: none;
+        border-top: 1px solid var(--panel-border);
+        border-radius: 16px 16px 0 0;
+        transform: translateY(100%);
+        transition: transform 0.3s ease;
+        box-shadow: 0 -4px 20px rgba(0,0,0,0.15);
+      }
+
+      #panel.open { transform: translateY(0); }
+
+      #mobile-toggle { display: flex; }
+
+      #panel-header { border-radius: 16px 16px 0 0; }
+
+      #mode-toolbar { grid-template-columns: repeat(3, 1fr); }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Search bar -->
+<div id="search-bar">
+  <input id="address-input" type="text" placeholder="Enter your property address…" autocomplete="off">
+  <button id="search-btn">Find</button>
+</div>
+
+<!-- Side panel -->
+<div id="panel">
+  <div id="panel-header">
+    <div class="logo-line">
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+        <rect x="2" y="6" width="3" height="12" rx="1" fill="#f4a818"/>
+        <rect x="8.5" y="6" width="3" height="12" rx="1" fill="#f4a818"/>
+        <rect x="15" y="6" width="3" height="12" rx="1" fill="#f4a818"/>
+        <rect x="2" y="8" width="16" height="2" rx="1" fill="white"/>
+        <rect x="2" y="13" width="16" height="2" rx="1" fill="white"/>
+      </svg>
+      <span><span class="accent">Liberty</span> Fencing</span>
+    </div>
+    <p>Draw your fence to get an instant estimate</p>
+  </div>
+
+  <div id="panel-scroll">
+    <!-- Mode -->
+    <div>
+      <div class="section-label">Mode</div>
+      <div id="mode-toolbar">
+        <button class="mode-btn active" data-mode="draw">
+          <span class="mode-icon">✏️</span>Draw Fence
+        </button>
+        <button class="mode-btn" data-mode="gate">
+          <span class="mode-icon">🚪</span>Add Gate
+        </button>
+        <button class="mode-btn" data-mode="select">
+          <span class="mode-icon">🗑️</span>Delete
+        </button>
+      </div>
+    </div>
+
+    <!-- Hint -->
+    <div id="hint-bar">Click on the map to place fence points. Double-click or press Enter to finish a segment.</div>
+
+    <!-- Fence type -->
+    <div id="fence-type-section">
+      <div class="section-label">Fence Type</div>
+      <div id="fence-type-btns"></div>
+    </div>
+
+    <!-- Gate type -->
+    <div id="gate-type-section" style="display:none">
+      <div class="section-label">Gate Type</div>
+      <div id="gate-type-btns">
+        <button class="gate-type-btn active" data-gate="single">
+          <span class="gate-icon">🚪</span>Single Gate<br><small>$700</small>
+        </button>
+        <button class="gate-type-btn" data-gate="double">
+          <span class="gate-icon">🏗️</span>Double / Drive<br><small>$1,400</small>
+        </button>
+      </div>
+    </div>
+
+    <!-- Estimate -->
+    <div>
+      <div class="section-label">Estimate</div>
+      <div id="estimate-list">
+        <div id="estimate-empty">Draw a fence to see your estimate</div>
+      </div>
+      <div id="estimate-total-row" style="display:none">
+        <span class="total-label">Estimated Total</span>
+        <span class="total-value" id="estimate-total">$0</span>
+      </div>
+      <p id="estimate-note" style="margin-top:6px">Approximate pricing. Final quote confirmed at your free on-site estimate.</p>
+    </div>
+  </div>
+
+  <!-- Actions -->
+  <div id="panel-actions">
+    <button class="action-btn" id="quote-btn">Get My Free Estimate →</button>
+    <button class="action-btn" id="share-btn">📋 Copy Share Link</button>
+    <button class="action-btn" id="clear-btn">Clear All</button>
+  </div>
+</div>
+
+<!-- Map -->
+<div id="map"></div>
+
+<!-- Mobile toggle -->
+<button id="mobile-toggle" title="Toggle panel">≡</button>
+
+<!-- Quote modal -->
+<div id="quote-modal" class="hidden">
+  <div class="modal-box">
+    <h2>Get Your Free Estimate</h2>
+    <p class="modal-sub">We'll review your design and reach out to confirm details.</p>
+    <div class="modal-estimate-preview" id="modal-preview"></div>
+    <form id="quote-form">
+      <div class="form-field">
+        <label for="f-name">Full Name</label>
+        <input id="f-name" name="name" type="text" placeholder="Jane Smith" required>
+      </div>
+      <div class="form-field">
+        <label for="f-phone">Phone Number</label>
+        <input id="f-phone" name="phone" type="tel" placeholder="573-555-1234" required>
+      </div>
+      <div class="form-field">
+        <label for="f-email">Email Address</label>
+        <input id="f-email" name="email" type="email" placeholder="jane@example.com" required>
+      </div>
+      <div class="modal-actions">
+        <button type="button" id="form-cancel">Cancel</button>
+        <button type="submit" id="form-submit">Send My Design</button>
+      </div>
+      <p style="font-size:0.75rem;color:#888;margin-top:12px;line-height:1.5;">
+        By submitting, you agree to receive SMS updates about your estimate and project from Liberty Fencing.
+        Reply STOP to opt out at any time. Msg &amp; data rates may apply.
+        See our <a href="/privacy.html" target="_blank" style="color:#f4a818;">Privacy Policy</a> and
+        <a href="/terms.html" target="_blank" style="color:#f4a818;">Terms &amp; Conditions</a>.
+      </p>
+    </form>
+  </div>
+</div>
+
+<!-- Toast -->
+<div id="toast"></div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+'use strict';
+
+// ─── CONFIG ───────────────────────────────────────────────────────────────────
+const CONFIG = {
+  webhookUrl: 'https://fencepostos-production.up.railway.app/leads',
+  businessPhone: '573-222-0021',
+  businessName: 'Liberty Fencing',
+  geocoderEmail: 'info@liberty-fencing.com',
+  defaultCenter: [37.7817, -90.4218], // Farmington, MO
+  defaultZoom: 18,
+};
+
+const FENCE_TYPES = {
+  wood_pine:  { label: 'Wood (Treated Pine)', pricePerFt: 35, color: '#e67e22', weight: 4 },
+  wood_cedar: { label: 'Wood (Cedar)',         pricePerFt: 42, color: '#c0392b', weight: 4 },
+  vinyl:      { label: 'Vinyl Privacy',        pricePerFt: 67, color: '#27ae60', weight: 4 },
+  chain_link: { label: 'Chain Link',           pricePerFt: 20, color: '#95a5a6', weight: 4 },
+  aluminum:   { label: 'Aluminum Ornamental',  pricePerFt: 46, color: '#2980b9', weight: 4 },
+};
+
+const GATE_TYPES = {
+  single: { label: 'Single Gate',       price: 700,  w: 28, h: 16 },
+  double: { label: 'Double/Drive Gate', price: 1400, w: 40, h: 16 },
+};
+
+const HINTS = {
+  draw:   'Click to place fence points. Double-click or press Enter to finish. Esc to cancel.',
+  gate:   'Click directly on an existing fence segment to place a gate.',
+  select: 'Click a fence segment or gate to delete it.',
+};
+
+// ─── STATE ────────────────────────────────────────────────────────────────────
+const state = {
+  version: 1,
+  segments: [],   // { id, type, points:[[lat,lng],...], polyline (non-serialized) }
+  gates: [],      // { id, segmentId, type, latlng:[lat,lng], t }
+  mode: 'draw',
+  fenceType: 'wood',
+  gateType: 'single',
+  drawing: {
+    active: false,
+    points: [],
+    previewLine: null,
+    activeLine: null,
+    dotMarkers: [],
+  },
+  snapIndicator: null,
+};
+
+// ─── MAP INIT ─────────────────────────────────────────────────────────────────
+const map = L.map('map', {
+  center: CONFIG.defaultCenter,
+  zoom: CONFIG.defaultZoom,
+  zoomControl: true,
+  doubleClickZoom: false, // we manage this ourselves
+  attributionControl: true,
+});
+
+L.tileLayer(
+  'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+  { attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye', maxZoom: 22, maxNativeZoom: 19 }
+).addTo(map);
+
+// Labels overlay (roads/addresses on top of satellite)
+L.tileLayer(
+  'https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}',
+  { attribution: '', maxZoom: 22, maxNativeZoom: 19, opacity: 0.6 }
+).addTo(map);
+
+// ─── HELPERS ──────────────────────────────────────────────────────────────────
+function uid() {
+  return Math.random().toString(36).slice(2, 10);
+}
+
+function metersToFeet(m) {
+  return m * 3.28084;
+}
+
+function segmentLengthFt(points) {
+  if (points.length < 2) return 0;
+  let meters = 0;
+  for (let i = 0; i < points.length - 1; i++) {
+    meters += L.latLng(points[i]).distanceTo(L.latLng(points[i + 1]));
+  }
+  return metersToFeet(meters);
+}
+
+function lerpLatLng(a, b, t) {
+  return [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t];
+}
+
+// Interpolate a LatLng at fraction t (0–1) along a multi-point polyline
+function pointAtT(points, t) {
+  if (points.length < 2) return points[0];
+  const totalM = points.reduce((acc, p, i) => {
+    if (i === 0) return 0;
+    return acc + L.latLng(points[i - 1]).distanceTo(L.latLng(p));
+  }, 0);
+  const target = t * totalM;
+  let acc = 0;
+  for (let i = 0; i < points.length - 1; i++) {
+    const segLen = L.latLng(points[i]).distanceTo(L.latLng(points[i + 1]));
+    if (acc + segLen >= target) {
+      const localT = segLen > 0 ? (target - acc) / segLen : 0;
+      return lerpLatLng(points[i], points[i + 1], localT);
+    }
+    acc += segLen;
+  }
+  return points[points.length - 1];
+}
+
+// Find closest point on all segments from a pixel position
+function closestOnSegments(latlng) {
+  const clickPx = map.latLngToLayerPoint(latlng);
+  let best = { dist: Infinity, segmentId: null, snapLatLng: null, t: 0 };
+
+  for (const seg of state.segments) {
+    const pts = seg.points;
+    let accM = 0;
+    let totalM = 0;
+    // compute total length first
+    for (let i = 0; i < pts.length - 1; i++) {
+      totalM += L.latLng(pts[i]).distanceTo(L.latLng(pts[i + 1]));
+    }
+    if (totalM === 0) continue;
+
+    for (let i = 0; i < pts.length - 1; i++) {
+      const aPx = map.latLngToLayerPoint(L.latLng(pts[i]));
+      const bPx = map.latLngToLayerPoint(L.latLng(pts[i + 1]));
+      const segLen = L.latLng(pts[i]).distanceTo(L.latLng(pts[i + 1]));
+
+      // Vector projection in pixel space
+      const abx = bPx.x - aPx.x;
+      const aby = bPx.y - aPx.y;
+      const acx = clickPx.x - aPx.x;
+      const acy = clickPx.y - aPx.y;
+      const ab2 = abx * abx + aby * aby;
+      const localT = ab2 > 0 ? Math.max(0, Math.min(1, (acx * abx + acy * aby) / ab2)) : 0;
+
+      const closestPx = { x: aPx.x + localT * abx, y: aPx.y + localT * aby };
+      const dx = clickPx.x - closestPx.x;
+      const dy = clickPx.y - closestPx.y;
+      const distPx = Math.sqrt(dx * dx + dy * dy);
+
+      if (distPx < best.dist) {
+        const snapLL = lerpLatLng(pts[i], pts[i + 1], localT);
+        const globalT = totalM > 0 ? (accM + localT * segLen) / totalM : 0;
+        best = { dist: distPx, segmentId: seg.id, snapLatLng: snapLL, t: globalT };
+      }
+      accM += segLen;
+    }
+  }
+
+  return best;
+}
+
+// ─── DRAW MODE ────────────────────────────────────────────────────────────────
+function startDrawing() {
+  state.drawing.active = true;
+  map.dragging.disable();
+  map.getContainer().style.cursor = 'crosshair';
+}
+
+function cancelDrawing() {
+  const d = state.drawing;
+  if (d.previewLine) { map.removeLayer(d.previewLine); d.previewLine = null; }
+  if (d.activeLine)  { map.removeLayer(d.activeLine);  d.activeLine  = null; }
+  d.dotMarkers.forEach(m => map.removeLayer(m));
+  d.dotMarkers = [];
+  d.points = [];
+  d.active = false;
+  map.dragging.enable();
+  map.getContainer().style.cursor = '';
+}
+
+function finalizeDrawing() {
+  const d = state.drawing;
+  if (d.points.length < 2) {
+    showToast('Draw at least 2 points to create a segment');
+    return;
+  }
+
+  const id = uid();
+  const seg = {
+    id,
+    type: state.fenceType,
+    points: [...d.points],
+    polyline: null,
+  };
+
+  const cfg = FENCE_TYPES[seg.type];
+  seg.polyline = L.polyline(seg.points.map(p => L.latLng(p)), {
+    color: cfg.color,
+    weight: 5,
+    opacity: 0.9,
+    lineJoin: 'round',
+  }).addTo(map);
+
+  bindSegmentEvents(seg);
+  state.segments.push(seg);
+
+  cancelDrawing();
+  renderEstimate();
+  encodeStateToUrl();
+  startDrawing(); // ready for next segment
+}
+
+function bindSegmentEvents(seg) {
+  seg.polyline.on('click', (e) => {
+    if (state.mode === 'select') {
+      L.DomEvent.stopPropagation(e);
+      deleteSegment(seg.id);
+    }
+    if (state.mode === 'gate') {
+      L.DomEvent.stopPropagation(e);
+      placeGate(e.latlng);
+    }
+  });
+
+  seg.polyline.on('mouseover', () => {
+    if (state.mode === 'select') {
+      seg.polyline.setStyle({ weight: 7, color: '#e74c3c' });
+    } else if (state.mode === 'gate') {
+      seg.polyline.setStyle({ weight: 7 });
+    }
+  });
+
+  seg.polyline.on('mouseout', () => {
+    const cfg = FENCE_TYPES[seg.type];
+    seg.polyline.setStyle({ weight: 5, color: cfg.color });
+  });
+}
+
+function deleteSegment(id) {
+  const idx = state.segments.findIndex(s => s.id === id);
+  if (idx === -1) return;
+  const seg = state.segments[idx];
+  map.removeLayer(seg.polyline);
+  state.segments.splice(idx, 1);
+
+  // Remove associated gates
+  const gatesToRemove = state.gates.filter(g => g.segmentId === id);
+  gatesToRemove.forEach(g => {
+    if (g.marker) map.removeLayer(g.marker);
+  });
+  state.gates = state.gates.filter(g => g.segmentId !== id);
+
+  renderEstimate();
+  encodeStateToUrl();
+  showToast('Segment deleted');
+}
+
+// ─── GATE MODE ────────────────────────────────────────────────────────────────
+function placeGate(latlng) {
+  const snap = closestOnSegments(latlng);
+  if (snap.dist > 25 || !snap.segmentId) {
+    showToast('Click directly on a fence segment to place a gate');
+    return;
+  }
+  addGate(snap.segmentId, snap.snapLatLng, snap.t);
+}
+
+function addGate(segmentId, latlng, t) {
+  const id = uid();
+  const cfg = GATE_TYPES[state.gateType];
+  const marker = createGateMarker(latlng, state.gateType, id);
+  marker.addTo(map);
+
+  const gate = { id, segmentId, type: state.gateType, latlng, t, marker };
+  state.gates.push(gate);
+  renderEstimate();
+  encodeStateToUrl();
+}
+
+function createGateMarker(latlng, type, gateId) {
+  const cfg = GATE_TYPES[type];
+  const icon = L.divIcon({
+    className: '',
+    iconSize: [cfg.w, cfg.h],
+    iconAnchor: [cfg.w / 2, cfg.h / 2],
+    html: `<div class="gate-marker" style="width:${cfg.w}px;height:${cfg.h}px">${type === 'double' ? '⊞' : '▢'}</div>`,
+  });
+  const m = L.marker(latlng, { icon, zIndexOffset: 500 });
+  m.on('click', (e) => {
+    L.DomEvent.stopPropagation(e);
+    if (state.mode === 'select') {
+      deleteGate(gateId);
+    }
+  });
+  return m;
+}
+
+function deleteGate(id) {
+  const idx = state.gates.findIndex(g => g.id === id);
+  if (idx === -1) return;
+  const gate = state.gates[idx];
+  if (gate.marker) map.removeLayer(gate.marker);
+  state.gates.splice(idx, 1);
+  renderEstimate();
+  encodeStateToUrl();
+  showToast('Gate deleted');
+}
+
+// ─── MAP EVENT HANDLERS ───────────────────────────────────────────────────────
+let lastClickTime = 0;
+
+map.on('click', (e) => {
+  const now = Date.now();
+  const isDbl = (now - lastClickTime) < 350;
+  lastClickTime = now;
+
+  if (state.mode === 'draw' && state.drawing.active) {
+    if (isDbl) {
+      // second click of a double-click: finalize
+      finalizeDrawing();
+      return;
+    }
+
+    const pt = [e.latlng.lat, e.latlng.lng];
+    state.drawing.points.push(pt);
+
+    // Dot marker
+    const dot = L.circleMarker(e.latlng, {
+      radius: 4, color: FENCE_TYPES[state.fenceType].color,
+      fillColor: '#fff', fillOpacity: 1, weight: 2,
+    }).addTo(map);
+    state.drawing.dotMarkers.push(dot);
+
+    // Build/update confirmed-points line
+    if (state.drawing.points.length >= 2) {
+      if (!state.drawing.activeLine) {
+        state.drawing.activeLine = L.polyline(
+          state.drawing.points.map(p => L.latLng(p)),
+          { color: FENCE_TYPES[state.fenceType].color, weight: 4, dashArray: '8 5', opacity: 0.7 }
+        ).addTo(map);
+      } else {
+        state.drawing.activeLine.setLatLngs(state.drawing.points.map(p => L.latLng(p)));
+      }
+    }
+
+    return;
+  }
+
+  if (state.mode === 'gate') {
+    placeGate(e.latlng);
+  }
+});
+
+map.on('mousemove', (e) => {
+  // Rubber-band preview line while drawing
+  if (state.mode === 'draw' && state.drawing.active && state.drawing.points.length >= 1) {
+    const pts = [...state.drawing.points.map(p => L.latLng(p)), e.latlng];
+    if (!state.drawing.previewLine) {
+      state.drawing.previewLine = L.polyline(pts, {
+        color: FENCE_TYPES[state.fenceType].color,
+        weight: 3, dashArray: '6 4', opacity: 0.5,
+      }).addTo(map);
+    } else {
+      state.drawing.previewLine.setLatLngs(pts);
+    }
+    return;
+  }
+
+  // Snap indicator in gate mode
+  if (state.mode === 'gate') {
+    const snap = closestOnSegments(e.latlng);
+    if (snap.dist < 25 && snap.snapLatLng) {
+      if (!state.snapIndicator) {
+        state.snapIndicator = L.marker(snap.snapLatLng, {
+          icon: L.divIcon({ className: 'snap-circle', iconSize: [14, 14], iconAnchor: [7, 7] }),
+          zIndexOffset: 1000,
+        }).addTo(map);
+      } else {
+        state.snapIndicator.setLatLng(snap.snapLatLng);
+      }
+    } else if (state.snapIndicator) {
+      map.removeLayer(state.snapIndicator);
+      state.snapIndicator = null;
+    }
+  }
+});
+
+// Enter key to finalize
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && state.mode === 'draw' && state.drawing.active) {
+    finalizeDrawing();
+  }
+  if (e.key === 'Escape') {
+    if (state.mode === 'draw' && state.drawing.active) {
+      cancelDrawing();
+      startDrawing();
+    }
+  }
+});
+
+// ─── MODE SWITCHING ───────────────────────────────────────────────────────────
+function setMode(mode) {
+  // Clean up outgoing mode
+  if (state.mode === 'draw') cancelDrawing();
+  if (state.snapIndicator) { map.removeLayer(state.snapIndicator); state.snapIndicator = null; }
+
+  state.mode = mode;
+
+  // Update cursor
+  map.getContainer().style.cursor = (mode === 'draw' || mode === 'gate') ? 'crosshair' : '';
+
+  // Update toolbar
+  document.querySelectorAll('.mode-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.mode === mode);
+  });
+
+  // Update panels
+  document.getElementById('fence-type-section').style.display = mode === 'draw' ? '' : 'none';
+  document.getElementById('gate-type-section').style.display  = mode === 'gate' ? '' : 'none';
+
+  // Update hint
+  document.getElementById('hint-bar').textContent = HINTS[mode] ?? '';
+
+  // Start drawing immediately if draw mode
+  if (mode === 'draw') startDrawing();
+}
+
+document.querySelectorAll('.mode-btn').forEach(btn => {
+  btn.addEventListener('click', () => setMode(btn.dataset.mode));
+});
+
+// ─── FENCE TYPE SELECTION ─────────────────────────────────────────────────────
+function renderFenceTypeBtns() {
+  const container = document.getElementById('fence-type-btns');
+  container.innerHTML = '';
+  for (const [key, cfg] of Object.entries(FENCE_TYPES)) {
+    const btn = document.createElement('button');
+    btn.className = 'fence-type-btn' + (key === state.fenceType ? ' active' : '');
+    btn.dataset.type = key;
+    btn.innerHTML = `
+      <div class="swatch" style="background:${cfg.color}"></div>
+      <div class="type-info">
+        <span class="type-name">${cfg.label}</span>
+        <span class="type-price">$${cfg.pricePerFt}/linear ft</span>
+      </div>`;
+    btn.addEventListener('click', () => {
+      state.fenceType = key;
+      document.querySelectorAll('.fence-type-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      // Update active drawing colors
+      const d = state.drawing;
+      const color = FENCE_TYPES[key].color;
+      if (d.activeLine) d.activeLine.setStyle({ color });
+      if (d.previewLine) d.previewLine.setStyle({ color });
+      d.dotMarkers.forEach(m => m.setStyle({ color }));
+    });
+    container.appendChild(btn);
+  }
+}
+
+renderFenceTypeBtns();
+
+// Gate type selection
+document.querySelectorAll('.gate-type-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    state.gateType = btn.dataset.gate;
+    document.querySelectorAll('.gate-type-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+  });
+});
+
+// ─── ESTIMATE RENDERING ───────────────────────────────────────────────────────
+function buildEstimate() {
+  const lines = [];
+  let total = 0;
+
+  for (const seg of state.segments) {
+    const ft = segmentLengthFt(seg.points);
+    const cfg = FENCE_TYPES[seg.type];
+    const cost = Math.max(ft * cfg.pricePerFt, 0);
+    total += cost;
+    lines.push({ type: 'fence', label: `${cfg.label} — ${Math.round(ft)} ft`, cost, color: cfg.color });
+  }
+
+  for (const gate of state.gates) {
+    const cfg = GATE_TYPES[gate.type];
+    total += cfg.price;
+    lines.push({ type: 'gate', label: cfg.label, cost: cfg.price });
+  }
+
+  return { lines, total };
+}
+
+function renderEstimate() {
+  const { lines, total } = buildEstimate();
+  const list = document.getElementById('estimate-list');
+  const totalRow = document.getElementById('estimate-total-row');
+  const totalEl = document.getElementById('estimate-total');
+  const empty = document.getElementById('estimate-empty');
+
+  if (lines.length === 0) {
+    list.innerHTML = '';
+    list.appendChild(Object.assign(document.createElement('div'), {
+      id: 'estimate-empty',
+      textContent: 'Draw a fence to see your estimate',
+    }));
+    totalRow.style.display = 'none';
+    return;
+  }
+
+  list.innerHTML = lines.map(l => `
+    <div class="estimate-row${l.type === 'gate' ? ' gate-row' : ''}">
+      <div class="e-swatch" style="background:${l.color ?? '#f4a818'}"></div>
+      <div class="e-label">${l.label}</div>
+      <div class="e-cost">$${Math.round(l.cost).toLocaleString()}</div>
+    </div>`).join('');
+
+  totalRow.style.display = 'flex';
+  totalEl.textContent = '$' + Math.round(total).toLocaleString();
+}
+
+// ─── ADDRESS SEARCH ───────────────────────────────────────────────────────────
+let searchDebounce;
+
+async function geocodeAddress(query) {
+  const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1&email=${CONFIG.geocoderEmail}`;
+  try {
+    const res = await fetch(url, { headers: { 'Accept': 'application/json' } });
+    const data = await res.json();
+    return data[0] ?? null;
+  } catch {
+    return null;
+  }
+}
+
+document.getElementById('search-btn').addEventListener('click', doSearch);
+document.getElementById('address-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') doSearch();
+});
+
+async function doSearch() {
+  const q = document.getElementById('address-input').value.trim();
+  if (!q) return;
+  document.getElementById('search-btn').textContent = '…';
+  const result = await geocodeAddress(q);
+  document.getElementById('search-btn').textContent = 'Find';
+  if (result) {
+    map.setView([parseFloat(result.lat), parseFloat(result.lon)], 20);
+  } else {
+    showToast('Address not found — try including city and state');
+  }
+}
+
+// ─── URL ENCODING / SHARING ───────────────────────────────────────────────────
+function encodeStateToUrl() {
+  try {
+    const center = map.getCenter();
+    const payload = {
+      v: 1,
+      c: [parseFloat(center.lat.toFixed(6)), parseFloat(center.lng.toFixed(6)), map.getZoom()],
+      s: state.segments.map(seg => ({
+        id: seg.id,
+        t: seg.type,
+        p: seg.points.map(p => [parseFloat(p[0].toFixed(6)), parseFloat(p[1].toFixed(6))]),
+      })),
+      g: state.gates.map(g => ({
+        id: g.id, sid: g.segmentId, t: g.type,
+        ll: [parseFloat(g.latlng[0].toFixed(6)), parseFloat(g.latlng[1].toFixed(6))],
+        frac: parseFloat(g.t.toFixed(4)),
+      })),
+    };
+    const json = JSON.stringify(payload);
+    const bytes = new TextEncoder().encode(json);
+    const binary = String.fromCharCode(...bytes);
+    const b64 = btoa(binary);
+    history.replaceState(null, '', '#' + b64);
+  } catch (e) {
+    console.warn('State encode failed', e);
+  }
+}
+
+function loadStateFromUrl() {
+  const hash = window.location.hash.slice(1);
+  if (!hash) return false;
+  try {
+    const binary = atob(hash);
+    const bytes = Uint8Array.from(binary, c => c.charCodeAt(0));
+    const json = new TextDecoder().decode(bytes);
+    const payload = JSON.parse(json);
+    if (payload.v !== 1) return false;
+
+    // Restore map position
+    if (payload.c) map.setView([payload.c[0], payload.c[1]], payload.c[2]);
+
+    // Restore segments
+    for (const sd of (payload.s ?? [])) {
+      const cfg = FENCE_TYPES[sd.t];
+      if (!cfg) continue;
+      const seg = {
+        id: sd.id,
+        type: sd.t,
+        points: sd.p,
+        polyline: L.polyline(sd.p.map(p => L.latLng(p)), {
+          color: cfg.color, weight: 5, opacity: 0.9, lineJoin: 'round',
+        }).addTo(map),
+      };
+      bindSegmentEvents(seg);
+      state.segments.push(seg);
+    }
+
+    // Restore gates
+    for (const gd of (payload.g ?? [])) {
+      const seg = state.segments.find(s => s.id === gd.sid);
+      if (!seg) continue;
+      const ll = gd.ll;
+      // Re-derive position from t in case of floating point drift
+      const derivedPt = pointAtT(seg.points, gd.frac);
+      const latlng = derivedPt ?? ll;
+      const marker = createGateMarker(latlng, gd.t, gd.id);
+      marker.addTo(map);
+      state.gates.push({ id: gd.id, segmentId: gd.sid, type: gd.t, latlng, t: gd.frac, marker });
+    }
+
+    renderEstimate();
+    return true;
+  } catch (e) {
+    console.warn('State decode failed', e);
+    return false;
+  }
+}
+
+// ─── SHARE ────────────────────────────────────────────────────────────────────
+document.getElementById('share-btn').addEventListener('click', async () => {
+  encodeStateToUrl();
+  const url = window.location.href;
+  try {
+    await navigator.clipboard.writeText(url);
+    showToast('Link copied! Send it via text or email.');
+  } catch {
+    prompt('Copy this link:', url);
+  }
+});
+
+// ─── CLEAR ────────────────────────────────────────────────────────────────────
+document.getElementById('clear-btn').addEventListener('click', () => {
+  if (state.segments.length === 0 && state.gates.length === 0) return;
+  if (!confirm('Clear all fence segments and gates?')) return;
+  state.segments.forEach(s => map.removeLayer(s.polyline));
+  state.gates.forEach(g => { if (g.marker) map.removeLayer(g.marker); });
+  state.segments = [];
+  state.gates = [];
+  cancelDrawing();
+  renderEstimate();
+  history.replaceState(null, '', window.location.pathname);
+  if (state.mode === 'draw') startDrawing();
+  showToast('Canvas cleared');
+});
+
+// ─── QUOTE MODAL ──────────────────────────────────────────────────────────────
+document.getElementById('quote-btn').addEventListener('click', openQuoteModal);
+document.getElementById('form-cancel').addEventListener('click', closeQuoteModal);
+document.getElementById('quote-modal').addEventListener('click', (e) => {
+  if (e.target === document.getElementById('quote-modal')) closeQuoteModal();
+});
+
+function openQuoteModal() {
+  const { lines, total } = buildEstimate();
+
+  const preview = document.getElementById('modal-preview');
+  if (total > 0) {
+    const desc = lines.map(l => l.label).join(', ');
+    preview.innerHTML = `Your design: <em>${desc}</em><strong>Estimated Total: $${Math.round(total).toLocaleString()}</strong>`;
+  } else {
+    preview.innerHTML = `No fence drawn yet — we'll work with you to design it!`;
+  }
+
+  document.getElementById('quote-modal').classList.remove('hidden');
+  document.getElementById('f-name').focus();
+}
+
+function closeQuoteModal() {
+  document.getElementById('quote-modal').classList.add('hidden');
+  // Reset form state
+  document.getElementById('quote-form').style.display = 'flex';
+  document.querySelector('.success-box')?.remove();
+  document.getElementById('form-submit').disabled = false;
+  document.getElementById('form-submit').textContent = 'Send My Design';
+}
+
+document.getElementById('quote-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const btn = document.getElementById('form-submit');
+  btn.disabled = true;
+  btn.textContent = 'Sending…';
+
+  encodeStateToUrl();
+
+  const { lines, total } = buildEstimate();
+  const name  = document.getElementById('f-name').value.trim();
+  const phone = document.getElementById('f-phone').value.trim();
+  const email = document.getElementById('f-email').value.trim();
+
+  const primaryService = state.segments.length > 0
+    ? FENCE_TYPES[state.segments[0].type]?.label ?? 'Fence Installation'
+    : 'Fence Installation';
+
+  const description = lines.length > 0
+    ? lines.map(l => l.label).join('; ') + `. Estimated total: $${Math.round(total).toLocaleString()}`
+    : 'Customer submitted a fence design (no segments drawn)';
+
+  const payload = {
+    name, phone, email,
+    source: 'fence_designer',
+    service_requested: primaryService,
+    description,
+    estimated_value: Math.round(total),
+    urgency: 'standard',
+    design: {
+      shareUrl: window.location.href,
+      segments: state.segments.map(s => ({
+        type: s.type,
+        length_ft: Math.round(segmentLengthFt(s.points)),
+        points: s.points,
+      })),
+      gates: state.gates.map(g => ({ type: g.type, latlng: g.latlng })),
+      line_items: lines,
+      subtotal: Math.round(total),
+    },
+  };
+
+  try {
+    await fetch(CONFIG.webhookUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+  } catch {
+    // Webhook may not be configured in dev — don't block the UX
+  }
+
+  // Show success
+  const form = document.getElementById('quote-form');
+  form.style.display = 'none';
+  const box = document.querySelector('.modal-box');
+  const success = document.createElement('div');
+  success.className = 'success-box';
+  success.innerHTML = `
+    <div class="success-icon">✅</div>
+    <h3>We've got your design!</h3>
+    <p>Thanks, ${name.split(' ')[0]}! We'll reach out to ${phone} shortly to schedule your free on-site estimate.<br><br>
+    Questions? Call us at <a href="tel:${CONFIG.businessPhone}">${CONFIG.businessPhone}</a>.</p>`;
+  box.appendChild(success);
+});
+
+// ─── TOAST ────────────────────────────────────────────────────────────────────
+let toastTimer;
+function showToast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 3000);
+}
+
+// ─── MOBILE PANEL TOGGLE ──────────────────────────────────────────────────────
+document.getElementById('mobile-toggle').addEventListener('click', () => {
+  document.getElementById('panel').classList.toggle('open');
+});
+
+// ─── INIT ─────────────────────────────────────────────────────────────────────
+const restoredFromUrl = loadStateFromUrl();
+
+// Initialize in draw mode
+setMode('draw');
+
+// Save center on map move
+let saveTimer;
+map.on('moveend', () => {
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(encodeStateToUrl, 500);
+});
+
+// Welcome toast for fresh sessions
+if (!restoredFromUrl) {
+  setTimeout(() => showToast('Search your address above to get started!'), 800);
+}
+</script>
+</body>
+</html>

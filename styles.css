@@ -578,6 +578,81 @@ body {
     }
 }
 
+/* Reviews */
+.reviews-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+    margin-bottom: 2.5rem;
+}
+
+.review-card {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    box-shadow: var(--shadow);
+    transition: box-shadow 0.2s;
+}
+
+.review-card:hover {
+    box-shadow: var(--shadow-hover);
+}
+
+.review-stars {
+    color: #f4a818;
+    font-size: 1.1rem;
+    letter-spacing: 2px;
+}
+
+.review-text {
+    font-size: 0.95rem;
+    line-height: 1.75;
+    color: var(--text);
+    font-style: italic;
+    flex: 1;
+}
+
+.review-author {
+    border-top: 1px solid var(--border);
+    padding-top: 1rem;
+}
+
+.review-name {
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: var(--primary);
+}
+
+.review-source {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    margin-top: 2px;
+}
+
+.reviews-cta {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+}
+
+.reviews-aggregate {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--primary);
+}
+
+@media (max-width: 768px) {
+    .reviews-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
 @media (max-width: 480px) {
     .hero-title {
         font-size: 2rem;
