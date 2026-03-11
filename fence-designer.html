@@ -59,6 +59,7 @@
       position: fixed;
       top: 0; right: 0; bottom: 0;
       left: var(--panel-w);
+      height: 100vh;
       z-index: 1;
     }
 
@@ -882,7 +883,7 @@ function closestOnSegments(latlngArr) {
 
 function makeDashedPolyline(path, color, opacity) {
   return new google.maps.Polyline({
-    path, map, strokeOpacity: 0,
+    path, map, strokeOpacity: 0, clickable: false,
     icons: [{ icon: { path: 'M 0,-1 0,1', strokeOpacity: opacity, strokeColor: color, scale: 3 }, offset: '0', repeat: '12px' }],
   });
 }
@@ -890,7 +891,7 @@ function makeDashedPolyline(path, color, opacity) {
 // ─── DRAW MODE ────────────────────────────────────────────────────────────────
 function startDrawing() {
   state.drawing.active = true;
-  map.setOptions({ draggable: false, draggableCursor: 'crosshair' });
+  map.setOptions({ draggableCursor: 'crosshair' });
 }
 
 function cancelDrawing() {
@@ -1195,30 +1196,36 @@ window.initMap = function () {
   geocoder = new google.maps.Geocoder();
 
   // ── Map click ────────────────────────────────────────────────────────────
-  let lastClickTime = 0;
+  let pendingClick = null;
   map.addListener('click', (e) => {
-    const now = Date.now();
-    const isDbl = (now - lastClickTime) < 350;
-    lastClickTime = now;
-
     if (state.mode === 'draw' && state.drawing.active) {
-      if (isDbl) { finalizeDrawing(); return; }
-      const pt = [e.latLng.lat(), e.latLng.lng()];
-      state.drawing.points.push(pt);
-      const color = FENCE_TYPES[state.fenceType].color;
-      const dot = new google.maps.Marker({
-        position: { lat: pt[0], lng: pt[1] }, map,
-        icon: { path: google.maps.SymbolPath.CIRCLE, scale: 4, strokeColor: color, strokeWeight: 2, fillColor: '#fff', fillOpacity: 1 },
-      });
-      state.drawing.dotMarkers.push(dot);
-      if (state.drawing.points.length >= 2) {
-        const path = state.drawing.points.map(p => ({ lat: p[0], lng: p[1] }));
-        if (!state.drawing.activeLine) state.drawing.activeLine = makeDashedPolyline(path, color, 0.7);
-        else state.drawing.activeLine.setPath(path);
-      }
+      clearTimeout(pendingClick);
+      pendingClick = setTimeout(() => {
+        const pt = [e.latLng.lat(), e.latLng.lng()];
+        state.drawing.points.push(pt);
+        const color = FENCE_TYPES[state.fenceType].color;
+        const dot = new google.maps.Marker({
+          position: { lat: pt[0], lng: pt[1] }, map,
+          clickable: false,
+          icon: { path: google.maps.SymbolPath.CIRCLE, scale: 4, strokeColor: color, strokeWeight: 2, fillColor: '#fff', fillOpacity: 1 },
+        });
+        state.drawing.dotMarkers.push(dot);
+        if (state.drawing.points.length >= 2) {
+          const path = state.drawing.points.map(p => ({ lat: p[0], lng: p[1] }));
+          if (!state.drawing.activeLine) state.drawing.activeLine = makeDashedPolyline(path, color, 0.7);
+          else state.drawing.activeLine.setPath(path);
+        }
+      }, 220);
       return;
     }
     if (state.mode === 'gate') placeGate(e.latLng);
+  });
+
+  map.addListener('dblclick', () => {
+    if (state.mode === 'draw' && state.drawing.active) {
+      clearTimeout(pendingClick);
+      finalizeDrawing();
+    }
   });
 
   // ── Mouse move ───────────────────────────────────────────────────────────
