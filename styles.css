@@ -535,8 +535,22 @@ body {
 @media (max-width: 768px) {
     .nav-menu {
         display: none;
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: #1a1a1a;
+        flex-direction: column;
+        padding: 16px 24px;
+        gap: 8px;
+        border-top: 1px solid #333;
+        z-index: 999;
     }
-    
+
+    .nav-menu.active {
+        display: flex;
+    }
+
     .mobile-menu-toggle {
         display: flex;
     }
