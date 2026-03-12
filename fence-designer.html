@@ -566,12 +566,127 @@
       line-height: 1.5;
     }
 
+    /* ── Finish button ───────────────────────────────────────────── */
+    #finish-btn {
+      position: fixed;
+      bottom: 108px;
+      left: 20px;
+      z-index: 2000;
+      display: none;
+      padding: 13px 22px;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 24px;
+      font-family: inherit;
+      font-size: 0.9rem;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 4px 16px rgba(244,168,24,0.45);
+      white-space: nowrap;
+    }
+    #finish-btn:active { background: var(--accent-dark); transform: scale(0.97); }
+
+    #undo-btn {
+      position: fixed;
+      bottom: 168px;
+      left: 20px;
+      z-index: 2000;
+      display: none;
+      padding: 11px 18px;
+      background: #fff;
+      color: var(--primary);
+      border: 1.5px solid var(--panel-border);
+      border-radius: 24px;
+      font-family: inherit;
+      font-size: 0.85rem;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+      white-space: nowrap;
+    }
+    #undo-btn:active { background: #f5f5f5; transform: scale(0.97); }
+
+    /* ── Tutorial overlay ────────────────────────────────────────── */
+    #tutorial-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.72);
+      z-index: 10000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    #tutorial-overlay.hidden { display: none; }
+    #tutorial-box {
+      background: #fff;
+      border-radius: 16px;
+      padding: 32px 24px 22px;
+      width: 100%;
+      max-width: 360px;
+      text-align: center;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+    }
+    .tut-step { display: none; }
+    .tut-step.active { display: block; }
+    .tut-icon { font-size: 2.6rem; margin-bottom: 14px; }
+    #tutorial-box h3 {
+      font-size: 1.15rem;
+      font-weight: 800;
+      color: var(--primary);
+      margin-bottom: 8px;
+    }
+    #tutorial-box p {
+      font-size: 0.875rem;
+      color: var(--text-light);
+      line-height: 1.6;
+      margin-bottom: 22px;
+    }
+    #tutorial-dots {
+      display: flex;
+      justify-content: center;
+      gap: 7px;
+      margin-bottom: 18px;
+    }
+    .tut-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--panel-border);
+      transition: background 0.2s;
+    }
+    .tut-dot.active { background: var(--accent); }
+    #tutorial-next {
+      width: 100%;
+      padding: 13px;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: var(--radius);
+      font-family: inherit;
+      font-size: 0.95rem;
+      font-weight: 700;
+      cursor: pointer;
+      margin-bottom: 10px;
+    }
+    #tutorial-next:hover { background: var(--accent-dark); }
+    #tutorial-skip {
+      background: none;
+      border: none;
+      font-family: inherit;
+      font-size: 0.82rem;
+      color: var(--text-light);
+      cursor: pointer;
+      padding: 4px;
+    }
+    #tutorial-skip:hover { color: var(--text); }
+
     /* ── Mobile ──────────────────────────────────────────────────── */
     #mobile-toggle {
       display: none;
       position: fixed;
-      bottom: 20px;
-      right: 20px;
+      bottom: 48px;
+      left: 20px;
       z-index: 2000;
       width: 52px;
       height: 52px;
@@ -711,6 +826,38 @@
 <!-- Map -->
 <div id="map"></div>
 
+<!-- Floating drawing controls -->
+<button id="undo-btn">↩ Undo</button>
+<button id="finish-btn">✓ Finish Segment</button>
+
+<!-- Tutorial overlay -->
+<div id="tutorial-overlay" class="hidden">
+  <div id="tutorial-box">
+    <div class="tut-step active">
+      <div class="tut-icon">🔍</div>
+      <h3>Search Your Address</h3>
+      <p>Type your property address in the search bar to navigate to your home on the map.</p>
+    </div>
+    <div class="tut-step">
+      <div class="tut-icon">✏️</div>
+      <h3>Draw Your Fence</h3>
+      <p>Tap the map to place fence points along your property line. Tap <strong>Finish Segment</strong> when done with each section.</p>
+    </div>
+    <div class="tut-step">
+      <div class="tut-icon">💰</div>
+      <h3>Get Your Estimate</h3>
+      <p>Your instant price estimate appears in the panel. Tap <strong>Get My Free Estimate</strong> to connect with us!</p>
+    </div>
+    <div id="tutorial-dots">
+      <span class="tut-dot active"></span>
+      <span class="tut-dot"></span>
+      <span class="tut-dot"></span>
+    </div>
+    <button id="tutorial-next">Next →</button>
+    <button id="tutorial-skip">Skip Tutorial</button>
+  </div>
+</div>
+
 <!-- Mobile toggle -->
 <button id="mobile-toggle" title="Toggle panel">≡</button>
 
@@ -750,7 +897,7 @@
 <!-- Toast -->
 <div id="toast"></div>
 
-<script async src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAYO-AluN5harrbYRAlwwtEq_9ggQIhdVY&libraries=geometry&callback=initMap&loading=async"></script>
+<script async src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAYO-AluN5harrbYRAlwwtEq_9ggQIhdVY&libraries=geometry,geocoding&callback=initMap&loading=async"></script>
 <script>
 'use strict';
 
@@ -776,11 +923,46 @@ const GATE_TYPES = {
   double: { label: 'Double/Drive Gate', price: 1400, w: 40, h: 16 },
 };
 
-const HINTS = {
-  draw:   'Click to place fence points. Double-click or press Enter to finish. Esc to cancel.',
-  gate:   'Click directly on an existing fence segment to place a gate.',
-  select: 'Click a fence segment or gate to delete it.',
-};
+const isTouch = () => navigator.maxTouchPoints > 0;
+
+function getHint(mode) {
+  if (mode === 'draw') return isTouch()
+    ? 'Tap the map to place fence points. Tap Finish Segment when done.'
+    : 'Click to place fence points. Double-click or press Enter to finish. Esc to cancel.';
+  if (mode === 'gate') return isTouch()
+    ? 'Tap directly on a fence segment to place a gate.'
+    : 'Click directly on an existing fence segment to place a gate.';
+  if (mode === 'select') return 'Tap a fence segment or gate to delete it.';
+  return '';
+}
+
+function updateFinishBtn() {
+  const drawing = state.mode === 'draw' && state.drawing.active;
+  const pts = state.drawing.points.length;
+  document.getElementById('undo-btn').style.display  = drawing && pts >= 1 ? 'block' : 'none';
+  document.getElementById('finish-btn').style.display = drawing && pts >= 1 ? 'block' : 'none';
+}
+
+function undoLastPoint() {
+  const d = state.drawing;
+  if (!d.active || d.points.length === 0) return;
+  d.points.pop();
+  const dot = d.dotMarkers.pop();
+  if (dot) dot.setMap(null);
+  if (d.points.length < 2) {
+    if (d.activeLine) { d.activeLine.setMap(null); d.activeLine = null; }
+  } else {
+    const path = d.points.map(p => ({ lat: p[0], lng: p[1] }));
+    d.activeLine?.setPath(path);
+  }
+  if (d.previewLine && d.points.length >= 1) {
+    const pts = [...d.points.map(p => ({ lat: p[0], lng: p[1] }))];
+    d.previewLine.setPath(pts);
+  } else if (d.previewLine) {
+    d.previewLine.setMap(null); d.previewLine = null;
+  }
+  updateFinishBtn();
+}
 
 // ─── STATE ────────────────────────────────────────────────────────────────────
 const state = {
@@ -892,6 +1074,7 @@ function makeDashedPolyline(path, color, opacity) {
 function startDrawing() {
   state.drawing.active = true;
   map.setOptions({ draggableCursor: 'crosshair' });
+  updateFinishBtn();
 }
 
 function cancelDrawing() {
@@ -903,6 +1086,7 @@ function cancelDrawing() {
   d.points = [];
   d.active = false;
   map.setOptions({ draggable: true, draggableCursor: '' });
+  updateFinishBtn();
 }
 
 function finalizeDrawing() {
@@ -922,13 +1106,14 @@ function finalizeDrawing() {
   renderEstimate();
   encodeStateToUrl();
   startDrawing();
+  updateFinishBtn();
 }
 
 function bindSegmentEvents(seg) {
   seg.polyline.addListener('click', (e) => {
     e.stop();
     if (state.mode === 'select') deleteSegment(seg.id);
-    if (state.mode === 'gate') placeGate(e.latLng);
+    if (state.mode === 'gate') placeGateOnSegment(seg, e.latLng);
   });
   seg.polyline.addListener('mouseover', () => {
     if (state.mode === 'select') seg.polyline.setOptions({ strokeWeight: 7, strokeColor: '#e74c3c' });
@@ -952,6 +1137,48 @@ function deleteSegment(id) {
 }
 
 // ─── GATE MODE ────────────────────────────────────────────────────────────────
+function placeGateOnSegment(seg, latLng) {
+  // Called when clicking directly on a polyline — we already know the segment.
+  // Find the closest point along this segment to the click, bypassing the pixel-
+  // projection threshold that placeGate() uses (which can fail if the projection
+  // overlay isn't ready yet).
+  const clickArr = [latLng.lat(), latLng.lng()];
+  const pts = seg.points;
+  let totalM = 0;
+  for (let i = 0; i < pts.length - 1; i++) totalM += distanceBetween(pts[i], pts[i + 1]);
+  if (totalM === 0) return;
+
+  let bestAccM = 0, bestLocalT = 0, bestSegIdx = 0, accM = 0;
+  let bestDist = Infinity;
+  for (let i = 0; i < pts.length - 1; i++) {
+    const segLen = distanceBetween(pts[i], pts[i + 1]);
+    // Try pixel projection first; fall back to midpoint if unavailable
+    const aPx = latLngToPixel(pts[i]);
+    const bPx = latLngToPixel(clickArr);
+    const cPx = latLngToPixel(pts[i + 1]);
+    let localT = 0;
+    if (aPx && bPx && cPx) {
+      const abx = cPx.x - aPx.x, aby = cPx.y - aPx.y;
+      const acx = bPx.x - aPx.x, acy = bPx.y - aPx.y;
+      const ab2 = abx * abx + aby * aby;
+      localT = ab2 > 0 ? Math.max(0, Math.min(1, (acx * abx + acy * aby) / ab2)) : 0;
+    }
+    const snapLL = lerpLatLng(pts[i], pts[i + 1], localT);
+    const d = distanceBetween(clickArr, snapLL);
+    if (d < bestDist) {
+      bestDist = d;
+      bestLocalT = localT;
+      bestSegIdx = i;
+      bestAccM = accM;
+    }
+    accM += segLen;
+  }
+  const bestSegLen = distanceBetween(pts[bestSegIdx], pts[bestSegIdx + 1]);
+  const snapLatLng = lerpLatLng(pts[bestSegIdx], pts[bestSegIdx + 1], bestLocalT);
+  const t = (bestAccM + bestLocalT * bestSegLen) / totalM;
+  addGate(seg.id, snapLatLng, t);
+}
+
 function placeGate(latLng) {
   const arr = [latLng.lat(), latLng.lng()];
   const snap = closestOnSegments(arr);
@@ -1006,8 +1233,9 @@ function setMode(mode) {
   document.querySelectorAll('.mode-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.mode === mode));
   document.getElementById('fence-type-section').style.display = mode === 'draw' ? '' : 'none';
   document.getElementById('gate-type-section').style.display  = mode === 'gate' ? '' : 'none';
-  document.getElementById('hint-bar').textContent = HINTS[mode] ?? '';
+  document.getElementById('hint-bar').textContent = getHint(mode);
   if (mode === 'draw') startDrawing();
+  updateFinishBtn();
 }
 
 // ─── FENCE TYPE SELECTION ─────────────────────────────────────────────────────
@@ -1081,15 +1309,24 @@ function doSearch() {
   const q = document.getElementById('address-input').value.trim();
   if (!q) return;
   document.getElementById('search-btn').textContent = '…';
-  geocoder.geocode({ address: q }, (results, status) => {
-    document.getElementById('search-btn').textContent = 'Find';
-    if (status === 'OK' && results[0]) {
-      map.setCenter(results[0].geometry.location);
-      map.setZoom(20);
-    } else {
+  geocoder.geocode({ address: q })
+    .then(({ results }) => {
+      document.getElementById('search-btn').textContent = 'Find';
+      if (results[0]) {
+        map.setCenter(results[0].geometry.location);
+        map.setZoom(20);
+        if (window.innerWidth <= 640) {
+          document.getElementById('panel').classList.add('open');
+          setTimeout(() => document.getElementById('panel').classList.remove('open'), 2500);
+        }
+      } else {
+        showToast('Address not found — try including city and state');
+      }
+    })
+    .catch(() => {
+      document.getElementById('search-btn').textContent = 'Find';
       showToast('Address not found — try including city and state');
-    }
-  });
+    });
 }
 
 // ─── URL ENCODING / SHARING ───────────────────────────────────────────────────
@@ -1174,6 +1411,36 @@ function closeQuoteModal() {
   document.getElementById('form-submit').textContent = 'Send My Design';
 }
 
+// ─── TUTORIAL ─────────────────────────────────────────────────────────────────
+function initTutorial() {
+  if (localStorage.getItem('lf_tutorial_done')) return;
+  let step = 0;
+  const overlay  = document.getElementById('tutorial-overlay');
+  const steps    = overlay.querySelectorAll('.tut-step');
+  const dots     = overlay.querySelectorAll('.tut-dot');
+  const nextBtn  = document.getElementById('tutorial-next');
+  const skipBtn  = document.getElementById('tutorial-skip');
+
+  overlay.classList.remove('hidden');
+
+  function goTo(n) {
+    steps[step].classList.remove('active');
+    dots[step].classList.remove('active');
+    step = n;
+    steps[step].classList.add('active');
+    dots[step].classList.add('active');
+    nextBtn.textContent = step === steps.length - 1 ? 'Get Started →' : 'Next →';
+  }
+
+  function dismiss() {
+    overlay.classList.add('hidden');
+    localStorage.setItem('lf_tutorial_done', '1');
+  }
+
+  nextBtn.addEventListener('click', () => step < steps.length - 1 ? goTo(step + 1) : dismiss());
+  skipBtn.addEventListener('click', dismiss);
+}
+
 // ─── GOOGLE MAPS ENTRY POINT ──────────────────────────────────────────────────
 window.initMap = function () {
   map = new google.maps.Map(document.getElementById('map'), {
@@ -1215,6 +1482,7 @@ window.initMap = function () {
           if (!state.drawing.activeLine) state.drawing.activeLine = makeDashedPolyline(path, color, 0.7);
           else state.drawing.activeLine.setPath(path);
         }
+        updateFinishBtn();
       }, 220);
       return;
     }
@@ -1259,6 +1527,7 @@ window.initMap = function () {
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Enter' && state.mode === 'draw' && state.drawing.active) finalizeDrawing();
     if (e.key === 'Escape' && state.mode === 'draw' && state.drawing.active) { cancelDrawing(); startDrawing(); }
+    if ((e.ctrlKey || e.metaKey) && e.key === 'z' && state.mode === 'draw') { e.preventDefault(); undoLastPoint(); }
   });
 
   // ── UI event wiring ───────────────────────────────────────────────────────
@@ -1320,12 +1589,14 @@ window.initMap = function () {
     document.querySelector('.modal-box').appendChild(success);
   });
   document.getElementById('mobile-toggle').addEventListener('click', () => document.getElementById('panel').classList.toggle('open'));
+  document.getElementById('finish-btn').addEventListener('click', () => finalizeDrawing());
+  document.getElementById('undo-btn').addEventListener('click', () => undoLastPoint());
 
   // ── Init ──────────────────────────────────────────────────────────────────
   renderFenceTypeBtns();
   const restoredFromUrl = loadStateFromUrl();
   setMode('draw');
-  if (!restoredFromUrl) setTimeout(() => showToast('Search your address above to get started!'), 800);
+  if (!restoredFromUrl) initTutorial();
 };
 </script>
 </body>
