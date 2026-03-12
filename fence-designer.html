@@ -897,7 +897,7 @@
 <!-- Toast -->
 <div id="toast"></div>
 
-<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyB08H_A4E-vRxfaBMPmE8IM4PUHvkrxGNE&libraries=geometry,geocoding&callback=initMap&loading=async" async defer></script>
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyB08H_A4E-vRxfaBMPmE8IM4PUHvkrxGNE&libraries=geometry,geocoding,marker&callback=initMap&loading=async" async defer></script>
 <script>
 'use strict';
 
@@ -948,7 +948,7 @@ function undoLastPoint() {
   if (!d.active || d.points.length === 0) return;
   d.points.pop();
   const dot = d.dotMarkers.pop();
-  if (dot) dot.setMap(null);
+  if (dot) dot.map = null;
   if (d.points.length < 2) {
     if (d.activeLine) { d.activeLine.setMap(null); d.activeLine = null; }
   } else {
@@ -1081,7 +1081,7 @@ function cancelDrawing() {
   const d = state.drawing;
   if (d.previewLine) { d.previewLine.setMap(null); d.previewLine = null; }
   if (d.activeLine)  { d.activeLine.setMap(null);  d.activeLine  = null; }
-  d.dotMarkers.forEach(m => m.setMap(null));
+  d.dotMarkers.forEach(m => m.map = null);
   d.dotMarkers = [];
   d.points = [];
   d.active = false;
@@ -1129,7 +1129,7 @@ function deleteSegment(id) {
   if (idx === -1) return;
   state.segments[idx].polyline.setMap(null);
   state.segments.splice(idx, 1);
-  state.gates.filter(g => g.segmentId === id).forEach(g => g.marker?.setMap(null));
+  state.gates.filter(g => g.segmentId === id).forEach(g => { if (g.marker) g.marker.map = null; });
   state.gates = state.gates.filter(g => g.segmentId !== id);
   renderEstimate();
   encodeStateToUrl();
@@ -1200,24 +1200,24 @@ function createGateMarker(latlng, type, gateId) {
     <rect x="1" y="1" width="${cfg.w-2}" height="${cfg.h-2}" rx="3" fill="white" fill-opacity="0.92" stroke="#f4a818" stroke-width="2"/>
     <text x="${cfg.w/2}" y="${cfg.h/2+4}" text-anchor="middle" font-family="sans-serif" font-size="9" font-weight="600" fill="#f4a818">${type === 'double' ? 'DBL' : 'SGL'}</text>
   </svg>`;
-  const marker = new google.maps.Marker({
+  const img = document.createElement('img');
+  img.src = 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(svg);
+  img.width = cfg.w;
+  img.height = cfg.h;
+  const marker = new google.maps.marker.AdvancedMarkerElement({
     position: { lat: latlng[0], lng: latlng[1] },
     map,
-    icon: {
-      url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(svg),
-      scaledSize: new google.maps.Size(cfg.w, cfg.h),
-      anchor: new google.maps.Point(cfg.w / 2, cfg.h / 2),
-    },
+    content: img,
     zIndex: 500,
   });
-  marker.addListener('click', (e) => { e.stop(); if (state.mode === 'select') deleteGate(gateId); });
+  marker.addListener('click', () => { if (state.mode === 'select') deleteGate(gateId); });
   return marker;
 }
 
 function deleteGate(id) {
   const idx = state.gates.findIndex(g => g.id === id);
   if (idx === -1) return;
-  state.gates[idx].marker?.setMap(null);
+  if (state.gates[idx].marker) state.gates[idx].marker.map = null;
   state.gates.splice(idx, 1);
   renderEstimate();
   encodeStateToUrl();
@@ -1227,7 +1227,7 @@ function deleteGate(id) {
 // ─── MODE SWITCHING ───────────────────────────────────────────────────────────
 function setMode(mode) {
   if (state.mode === 'draw') cancelDrawing();
-  if (state.snapIndicator) { state.snapIndicator.setMap(null); state.snapIndicator = null; }
+  if (state.snapIndicator) { state.snapIndicator.map = null; state.snapIndicator = null; }
   state.mode = mode;
   map.setOptions({ draggableCursor: (mode === 'draw' || mode === 'gate') ? 'crosshair' : '' });
   document.querySelectorAll('.mode-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.mode === mode));
@@ -1447,6 +1447,7 @@ window.initMap = function () {
     center: { lat: CONFIG.defaultCenter[0], lng: CONFIG.defaultCenter[1] },
     zoom: CONFIG.defaultZoom,
     mapTypeId: 'satellite',
+    mapId: '1d3efae509cc04df800875c2',
     tilt: 0,
     disableDoubleClickZoom: true,
     gestureHandling: 'greedy',
@@ -1471,10 +1472,11 @@ window.initMap = function () {
         const pt = [e.latLng.lat(), e.latLng.lng()];
         state.drawing.points.push(pt);
         const color = FENCE_TYPES[state.fenceType].color;
-        const dot = new google.maps.Marker({
+        const dotEl = document.createElement('div');
+        dotEl.style.cssText = `width:8px;height:8px;border-radius:50%;background:#fff;border:2px solid ${color};pointer-events:none;`;
+        const dot = new google.maps.marker.AdvancedMarkerElement({
           position: { lat: pt[0], lng: pt[1] }, map,
-          clickable: false,
-          icon: { path: google.maps.SymbolPath.CIRCLE, scale: 4, strokeColor: color, strokeWeight: 2, fillColor: '#fff', fillOpacity: 1 },
+          content: dotEl,
         });
         state.drawing.dotMarkers.push(dot);
         if (state.drawing.points.length >= 2) {
@@ -1510,12 +1512,14 @@ window.initMap = function () {
       if (snap.dist < 25 && snap.snapLatLng) {
         const pos = { lat: snap.snapLatLng[0], lng: snap.snapLatLng[1] };
         if (!state.snapIndicator) {
-          state.snapIndicator = new google.maps.Marker({
+          const snapEl = document.createElement('div');
+          snapEl.style.cssText = 'width:14px;height:14px;border-radius:50%;background:transparent;border:2px solid #f4a818;pointer-events:none;';
+          state.snapIndicator = new google.maps.marker.AdvancedMarkerElement({
             position: pos, map, zIndex: 1000,
-            icon: { path: google.maps.SymbolPath.CIRCLE, scale: 7, strokeColor: '#f4a818', strokeWeight: 2, fillOpacity: 0 },
+            content: snapEl,
           });
-        } else { state.snapIndicator.setPosition(pos); }
-      } else if (state.snapIndicator) { state.snapIndicator.setMap(null); state.snapIndicator = null; }
+        } else { state.snapIndicator.position = pos; }
+      } else if (state.snapIndicator) { state.snapIndicator.map = null; state.snapIndicator = null; }
     }
   });
 
@@ -1548,7 +1552,7 @@ window.initMap = function () {
     if (state.segments.length === 0 && state.gates.length === 0) return;
     if (!confirm('Clear all fence segments and gates?')) return;
     state.segments.forEach(s => s.polyline.setMap(null));
-    state.gates.forEach(g => g.marker?.setMap(null));
+    state.gates.forEach(g => { if (g.marker) g.marker.map = null; });
     state.segments = []; state.gates = [];
     cancelDrawing(); renderEstimate();
     history.replaceState(null, '', window.location.pathname);
