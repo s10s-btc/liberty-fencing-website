@@ -30,7 +30,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Design Your Fence | Liberty Fencing</title>
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     :root {
@@ -60,6 +59,7 @@
       position: fixed;
       top: 0; right: 0; bottom: 0;
       left: var(--panel-w);
+      height: 100vh;
       z-index: 1;
     }
 
@@ -750,7 +750,7 @@
 <!-- Toast -->
 <div id="toast"></div>
 
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyB08H_A4E-vRxfaBMPmE8IM4PUHvkrxGNE&libraries=geometry&callback=initMap&loading=async" async defer></script>
 <script>
 'use strict';
 
@@ -759,7 +759,6 @@ const CONFIG = {
   webhookUrl: 'https://fencepostos-production.up.railway.app/leads',
   businessPhone: '573-222-0021',
   businessName: 'Liberty Fencing',
-  geocoderEmail: 'info@liberty-fencing.com',
   defaultCenter: [37.7817, -90.4218], // Farmington, MO
   defaultZoom: 18,
 };
@@ -786,10 +785,10 @@ const HINTS = {
 // ─── STATE ────────────────────────────────────────────────────────────────────
 const state = {
   version: 1,
-  segments: [],   // { id, type, points:[[lat,lng],...], polyline (non-serialized) }
-  gates: [],      // { id, segmentId, type, latlng:[lat,lng], t }
+  segments: [],   // { id, type, points:[[lat,lng],...], polyline }
+  gates: [],      // { id, segmentId, type, latlng:[lat,lng], t, marker }
   mode: 'draw',
-  fenceType: 'wood',
+  fenceType: 'wood_pine',
   gateType: 'single',
   drawing: {
     active: false,
@@ -801,41 +800,24 @@ const state = {
   snapIndicator: null,
 };
 
-// ─── MAP INIT ─────────────────────────────────────────────────────────────────
-const map = L.map('map', {
-  center: CONFIG.defaultCenter,
-  zoom: CONFIG.defaultZoom,
-  zoomControl: true,
-  doubleClickZoom: false, // we manage this ourselves
-  attributionControl: true,
-});
-
-L.tileLayer(
-  'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-  { attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye', maxZoom: 22, maxNativeZoom: 19 }
-).addTo(map);
-
-// Labels overlay (roads/addresses on top of satellite)
-L.tileLayer(
-  'https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}',
-  { attribution: '', maxZoom: 22, maxNativeZoom: 19, opacity: 0.6 }
-).addTo(map);
+// ─── MAP GLOBALS ──────────────────────────────────────────────────────────────
+let map, projectionOverlay, geocoder;
 
 // ─── HELPERS ──────────────────────────────────────────────────────────────────
-function uid() {
-  return Math.random().toString(36).slice(2, 10);
-}
+function uid() { return Math.random().toString(36).slice(2, 10); }
+function metersToFeet(m) { return m * 3.28084; }
 
-function metersToFeet(m) {
-  return m * 3.28084;
+function distanceBetween(a, b) {
+  return google.maps.geometry.spherical.computeDistanceBetween(
+    new google.maps.LatLng(a[0], a[1]),
+    new google.maps.LatLng(b[0], b[1])
+  );
 }
 
 function segmentLengthFt(points) {
   if (points.length < 2) return 0;
   let meters = 0;
-  for (let i = 0; i < points.length - 1; i++) {
-    meters += L.latLng(points[i]).distanceTo(L.latLng(points[i + 1]));
-  }
+  for (let i = 0; i < points.length - 1; i++) meters += distanceBetween(points[i], points[i + 1]);
   return metersToFeet(meters);
 }
 
@@ -843,340 +825,190 @@ function lerpLatLng(a, b, t) {
   return [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t];
 }
 
-// Interpolate a LatLng at fraction t (0–1) along a multi-point polyline
 function pointAtT(points, t) {
   if (points.length < 2) return points[0];
-  const totalM = points.reduce((acc, p, i) => {
-    if (i === 0) return 0;
-    return acc + L.latLng(points[i - 1]).distanceTo(L.latLng(p));
-  }, 0);
+  const totalM = points.reduce((acc, p, i) => i === 0 ? 0 : acc + distanceBetween(points[i - 1], p), 0);
   const target = t * totalM;
   let acc = 0;
   for (let i = 0; i < points.length - 1; i++) {
-    const segLen = L.latLng(points[i]).distanceTo(L.latLng(points[i + 1]));
+    const segLen = distanceBetween(points[i], points[i + 1]);
     if (acc + segLen >= target) {
-      const localT = segLen > 0 ? (target - acc) / segLen : 0;
-      return lerpLatLng(points[i], points[i + 1], localT);
+      return lerpLatLng(points[i], points[i + 1], segLen > 0 ? (target - acc) / segLen : 0);
     }
     acc += segLen;
   }
   return points[points.length - 1];
 }
 
-// Find closest point on all segments from a pixel position
-function closestOnSegments(latlng) {
-  const clickPx = map.latLngToLayerPoint(latlng);
+function latLngToPixel(arr) {
+  const proj = projectionOverlay.getProjection();
+  if (!proj) return null;
+  return proj.fromLatLngToContainerPixel(new google.maps.LatLng(arr[0], arr[1]));
+}
+
+function closestOnSegments(latlngArr) {
+  const clickPx = latLngToPixel(latlngArr);
+  if (!clickPx) return { dist: Infinity, segmentId: null, snapLatLng: null, t: 0 };
   let best = { dist: Infinity, segmentId: null, snapLatLng: null, t: 0 };
 
   for (const seg of state.segments) {
     const pts = seg.points;
-    let accM = 0;
-    let totalM = 0;
-    // compute total length first
-    for (let i = 0; i < pts.length - 1; i++) {
-      totalM += L.latLng(pts[i]).distanceTo(L.latLng(pts[i + 1]));
-    }
+    let accM = 0, totalM = 0;
+    for (let i = 0; i < pts.length - 1; i++) totalM += distanceBetween(pts[i], pts[i + 1]);
     if (totalM === 0) continue;
 
     for (let i = 0; i < pts.length - 1; i++) {
-      const aPx = map.latLngToLayerPoint(L.latLng(pts[i]));
-      const bPx = map.latLngToLayerPoint(L.latLng(pts[i + 1]));
-      const segLen = L.latLng(pts[i]).distanceTo(L.latLng(pts[i + 1]));
-
-      // Vector projection in pixel space
-      const abx = bPx.x - aPx.x;
-      const aby = bPx.y - aPx.y;
-      const acx = clickPx.x - aPx.x;
-      const acy = clickPx.y - aPx.y;
+      const aPx = latLngToPixel(pts[i]);
+      const bPx = latLngToPixel(pts[i + 1]);
+      if (!aPx || !bPx) continue;
+      const segLen = distanceBetween(pts[i], pts[i + 1]);
+      const abx = bPx.x - aPx.x, aby = bPx.y - aPx.y;
+      const acx = clickPx.x - aPx.x, acy = clickPx.y - aPx.y;
       const ab2 = abx * abx + aby * aby;
       const localT = ab2 > 0 ? Math.max(0, Math.min(1, (acx * abx + acy * aby) / ab2)) : 0;
-
       const closestPx = { x: aPx.x + localT * abx, y: aPx.y + localT * aby };
-      const dx = clickPx.x - closestPx.x;
-      const dy = clickPx.y - closestPx.y;
-      const distPx = Math.sqrt(dx * dx + dy * dy);
-
+      const distPx = Math.hypot(clickPx.x - closestPx.x, clickPx.y - closestPx.y);
       if (distPx < best.dist) {
-        const snapLL = lerpLatLng(pts[i], pts[i + 1], localT);
-        const globalT = totalM > 0 ? (accM + localT * segLen) / totalM : 0;
-        best = { dist: distPx, segmentId: seg.id, snapLatLng: snapLL, t: globalT };
+        best = {
+          dist: distPx, segmentId: seg.id,
+          snapLatLng: lerpLatLng(pts[i], pts[i + 1], localT),
+          t: totalM > 0 ? (accM + localT * segLen) / totalM : 0,
+        };
       }
       accM += segLen;
     }
   }
-
   return best;
+}
+
+function makeDashedPolyline(path, color, opacity) {
+  return new google.maps.Polyline({
+    path, map, strokeOpacity: 0, clickable: false,
+    icons: [{ icon: { path: 'M 0,-1 0,1', strokeOpacity: opacity, strokeColor: color, scale: 3 }, offset: '0', repeat: '12px' }],
+  });
 }
 
 // ─── DRAW MODE ────────────────────────────────────────────────────────────────
 function startDrawing() {
   state.drawing.active = true;
-  map.dragging.disable();
-  map.getContainer().style.cursor = 'crosshair';
+  map.setOptions({ draggableCursor: 'crosshair' });
 }
 
 function cancelDrawing() {
   const d = state.drawing;
-  if (d.previewLine) { map.removeLayer(d.previewLine); d.previewLine = null; }
-  if (d.activeLine)  { map.removeLayer(d.activeLine);  d.activeLine  = null; }
-  d.dotMarkers.forEach(m => map.removeLayer(m));
+  if (d.previewLine) { d.previewLine.setMap(null); d.previewLine = null; }
+  if (d.activeLine)  { d.activeLine.setMap(null);  d.activeLine  = null; }
+  d.dotMarkers.forEach(m => m.setMap(null));
   d.dotMarkers = [];
   d.points = [];
   d.active = false;
-  map.dragging.enable();
-  map.getContainer().style.cursor = '';
+  map.setOptions({ draggable: true, draggableCursor: '' });
 }
 
 function finalizeDrawing() {
   const d = state.drawing;
-  if (d.points.length < 2) {
-    showToast('Draw at least 2 points to create a segment');
-    return;
-  }
+  if (d.points.length < 2) { showToast('Draw at least 2 points to create a segment'); return; }
 
   const id = uid();
-  const seg = {
-    id,
-    type: state.fenceType,
-    points: [...d.points],
-    polyline: null,
-  };
-
-  const cfg = FENCE_TYPES[seg.type];
-  seg.polyline = L.polyline(seg.points.map(p => L.latLng(p)), {
-    color: cfg.color,
-    weight: 5,
-    opacity: 0.9,
-    lineJoin: 'round',
-  }).addTo(map);
-
+  const cfg = FENCE_TYPES[state.fenceType];
+  const polyline = new google.maps.Polyline({
+    path: d.points.map(p => ({ lat: p[0], lng: p[1] })),
+    strokeColor: cfg.color, strokeWeight: 5, strokeOpacity: 0.9, map,
+  });
+  const seg = { id, type: state.fenceType, points: [...d.points], polyline };
   bindSegmentEvents(seg);
   state.segments.push(seg);
-
   cancelDrawing();
   renderEstimate();
   encodeStateToUrl();
-  startDrawing(); // ready for next segment
+  startDrawing();
 }
 
 function bindSegmentEvents(seg) {
-  seg.polyline.on('click', (e) => {
-    if (state.mode === 'select') {
-      L.DomEvent.stopPropagation(e);
-      deleteSegment(seg.id);
-    }
-    if (state.mode === 'gate') {
-      L.DomEvent.stopPropagation(e);
-      placeGate(e.latlng);
-    }
+  seg.polyline.addListener('click', (e) => {
+    e.stop();
+    if (state.mode === 'select') deleteSegment(seg.id);
+    if (state.mode === 'gate') placeGate(e.latLng);
   });
-
-  seg.polyline.on('mouseover', () => {
-    if (state.mode === 'select') {
-      seg.polyline.setStyle({ weight: 7, color: '#e74c3c' });
-    } else if (state.mode === 'gate') {
-      seg.polyline.setStyle({ weight: 7 });
-    }
+  seg.polyline.addListener('mouseover', () => {
+    if (state.mode === 'select') seg.polyline.setOptions({ strokeWeight: 7, strokeColor: '#e74c3c' });
+    else if (state.mode === 'gate') seg.polyline.setOptions({ strokeWeight: 7 });
   });
-
-  seg.polyline.on('mouseout', () => {
-    const cfg = FENCE_TYPES[seg.type];
-    seg.polyline.setStyle({ weight: 5, color: cfg.color });
+  seg.polyline.addListener('mouseout', () => {
+    seg.polyline.setOptions({ strokeWeight: 5, strokeColor: FENCE_TYPES[seg.type].color });
   });
 }
 
 function deleteSegment(id) {
   const idx = state.segments.findIndex(s => s.id === id);
   if (idx === -1) return;
-  const seg = state.segments[idx];
-  map.removeLayer(seg.polyline);
+  state.segments[idx].polyline.setMap(null);
   state.segments.splice(idx, 1);
-
-  // Remove associated gates
-  const gatesToRemove = state.gates.filter(g => g.segmentId === id);
-  gatesToRemove.forEach(g => {
-    if (g.marker) map.removeLayer(g.marker);
-  });
+  state.gates.filter(g => g.segmentId === id).forEach(g => g.marker?.setMap(null));
   state.gates = state.gates.filter(g => g.segmentId !== id);
-
   renderEstimate();
   encodeStateToUrl();
   showToast('Segment deleted');
 }
 
 // ─── GATE MODE ────────────────────────────────────────────────────────────────
-function placeGate(latlng) {
-  const snap = closestOnSegments(latlng);
-  if (snap.dist > 25 || !snap.segmentId) {
-    showToast('Click directly on a fence segment to place a gate');
-    return;
-  }
+function placeGate(latLng) {
+  const arr = [latLng.lat(), latLng.lng()];
+  const snap = closestOnSegments(arr);
+  if (snap.dist > 25 || !snap.segmentId) { showToast('Click directly on a fence segment to place a gate'); return; }
   addGate(snap.segmentId, snap.snapLatLng, snap.t);
 }
 
 function addGate(segmentId, latlng, t) {
   const id = uid();
-  const cfg = GATE_TYPES[state.gateType];
   const marker = createGateMarker(latlng, state.gateType, id);
-  marker.addTo(map);
-
-  const gate = { id, segmentId, type: state.gateType, latlng, t, marker };
-  state.gates.push(gate);
+  state.gates.push({ id, segmentId, type: state.gateType, latlng, t, marker });
   renderEstimate();
   encodeStateToUrl();
 }
 
 function createGateMarker(latlng, type, gateId) {
   const cfg = GATE_TYPES[type];
-  const icon = L.divIcon({
-    className: '',
-    iconSize: [cfg.w, cfg.h],
-    iconAnchor: [cfg.w / 2, cfg.h / 2],
-    html: `<div class="gate-marker" style="width:${cfg.w}px;height:${cfg.h}px">${type === 'double' ? '⊞' : '▢'}</div>`,
+  const svg = `<svg width="${cfg.w}" height="${cfg.h}" xmlns="http://www.w3.org/2000/svg">
+    <rect x="1" y="1" width="${cfg.w-2}" height="${cfg.h-2}" rx="3" fill="white" fill-opacity="0.92" stroke="#f4a818" stroke-width="2"/>
+    <text x="${cfg.w/2}" y="${cfg.h/2+4}" text-anchor="middle" font-family="sans-serif" font-size="9" font-weight="600" fill="#f4a818">${type === 'double' ? 'DBL' : 'SGL'}</text>
+  </svg>`;
+  const marker = new google.maps.Marker({
+    position: { lat: latlng[0], lng: latlng[1] },
+    map,
+    icon: {
+      url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(svg),
+      scaledSize: new google.maps.Size(cfg.w, cfg.h),
+      anchor: new google.maps.Point(cfg.w / 2, cfg.h / 2),
+    },
+    zIndex: 500,
   });
-  const m = L.marker(latlng, { icon, zIndexOffset: 500 });
-  m.on('click', (e) => {
-    L.DomEvent.stopPropagation(e);
-    if (state.mode === 'select') {
-      deleteGate(gateId);
-    }
-  });
-  return m;
+  marker.addListener('click', (e) => { e.stop(); if (state.mode === 'select') deleteGate(gateId); });
+  return marker;
 }
 
 function deleteGate(id) {
   const idx = state.gates.findIndex(g => g.id === id);
   if (idx === -1) return;
-  const gate = state.gates[idx];
-  if (gate.marker) map.removeLayer(gate.marker);
+  state.gates[idx].marker?.setMap(null);
   state.gates.splice(idx, 1);
   renderEstimate();
   encodeStateToUrl();
   showToast('Gate deleted');
 }
 
-// ─── MAP EVENT HANDLERS ───────────────────────────────────────────────────────
-let lastClickTime = 0;
-
-map.on('click', (e) => {
-  const now = Date.now();
-  const isDbl = (now - lastClickTime) < 350;
-  lastClickTime = now;
-
-  if (state.mode === 'draw' && state.drawing.active) {
-    if (isDbl) {
-      // second click of a double-click: finalize
-      finalizeDrawing();
-      return;
-    }
-
-    const pt = [e.latlng.lat, e.latlng.lng];
-    state.drawing.points.push(pt);
-
-    // Dot marker
-    const dot = L.circleMarker(e.latlng, {
-      radius: 4, color: FENCE_TYPES[state.fenceType].color,
-      fillColor: '#fff', fillOpacity: 1, weight: 2,
-    }).addTo(map);
-    state.drawing.dotMarkers.push(dot);
-
-    // Build/update confirmed-points line
-    if (state.drawing.points.length >= 2) {
-      if (!state.drawing.activeLine) {
-        state.drawing.activeLine = L.polyline(
-          state.drawing.points.map(p => L.latLng(p)),
-          { color: FENCE_TYPES[state.fenceType].color, weight: 4, dashArray: '8 5', opacity: 0.7 }
-        ).addTo(map);
-      } else {
-        state.drawing.activeLine.setLatLngs(state.drawing.points.map(p => L.latLng(p)));
-      }
-    }
-
-    return;
-  }
-
-  if (state.mode === 'gate') {
-    placeGate(e.latlng);
-  }
-});
-
-map.on('mousemove', (e) => {
-  // Rubber-band preview line while drawing
-  if (state.mode === 'draw' && state.drawing.active && state.drawing.points.length >= 1) {
-    const pts = [...state.drawing.points.map(p => L.latLng(p)), e.latlng];
-    if (!state.drawing.previewLine) {
-      state.drawing.previewLine = L.polyline(pts, {
-        color: FENCE_TYPES[state.fenceType].color,
-        weight: 3, dashArray: '6 4', opacity: 0.5,
-      }).addTo(map);
-    } else {
-      state.drawing.previewLine.setLatLngs(pts);
-    }
-    return;
-  }
-
-  // Snap indicator in gate mode
-  if (state.mode === 'gate') {
-    const snap = closestOnSegments(e.latlng);
-    if (snap.dist < 25 && snap.snapLatLng) {
-      if (!state.snapIndicator) {
-        state.snapIndicator = L.marker(snap.snapLatLng, {
-          icon: L.divIcon({ className: 'snap-circle', iconSize: [14, 14], iconAnchor: [7, 7] }),
-          zIndexOffset: 1000,
-        }).addTo(map);
-      } else {
-        state.snapIndicator.setLatLng(snap.snapLatLng);
-      }
-    } else if (state.snapIndicator) {
-      map.removeLayer(state.snapIndicator);
-      state.snapIndicator = null;
-    }
-  }
-});
-
-// Enter key to finalize
-document.addEventListener('keydown', (e) => {
-  if (e.key === 'Enter' && state.mode === 'draw' && state.drawing.active) {
-    finalizeDrawing();
-  }
-  if (e.key === 'Escape') {
-    if (state.mode === 'draw' && state.drawing.active) {
-      cancelDrawing();
-      startDrawing();
-    }
-  }
-});
-
 // ─── MODE SWITCHING ───────────────────────────────────────────────────────────
 function setMode(mode) {
-  // Clean up outgoing mode
   if (state.mode === 'draw') cancelDrawing();
-  if (state.snapIndicator) { map.removeLayer(state.snapIndicator); state.snapIndicator = null; }
-
+  if (state.snapIndicator) { state.snapIndicator.setMap(null); state.snapIndicator = null; }
   state.mode = mode;
-
-  // Update cursor
-  map.getContainer().style.cursor = (mode === 'draw' || mode === 'gate') ? 'crosshair' : '';
-
-  // Update toolbar
-  document.querySelectorAll('.mode-btn').forEach(btn => {
-    btn.classList.toggle('active', btn.dataset.mode === mode);
-  });
-
-  // Update panels
+  map.setOptions({ draggableCursor: (mode === 'draw' || mode === 'gate') ? 'crosshair' : '' });
+  document.querySelectorAll('.mode-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.mode === mode));
   document.getElementById('fence-type-section').style.display = mode === 'draw' ? '' : 'none';
   document.getElementById('gate-type-section').style.display  = mode === 'gate' ? '' : 'none';
-
-  // Update hint
   document.getElementById('hint-bar').textContent = HINTS[mode] ?? '';
-
-  // Start drawing immediately if draw mode
   if (mode === 'draw') startDrawing();
 }
-
-document.querySelectorAll('.mode-btn').forEach(btn => {
-  btn.addEventListener('click', () => setMode(btn.dataset.mode));
-});
 
 // ─── FENCE TYPE SELECTION ─────────────────────────────────────────────────────
 function renderFenceTypeBtns() {
@@ -1196,33 +1028,20 @@ function renderFenceTypeBtns() {
       state.fenceType = key;
       document.querySelectorAll('.fence-type-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
-      // Update active drawing colors
       const d = state.drawing;
-      const color = FENCE_TYPES[key].color;
-      if (d.activeLine) d.activeLine.setStyle({ color });
-      if (d.previewLine) d.previewLine.setStyle({ color });
-      d.dotMarkers.forEach(m => m.setStyle({ color }));
+      const dashIcons = (op) => [{ icon: { path: 'M 0,-1 0,1', strokeOpacity: op, strokeColor: cfg.color, scale: 3 }, offset: '0', repeat: '12px' }];
+      if (d.activeLine)  d.activeLine.setOptions({ icons: dashIcons(0.7) });
+      if (d.previewLine) d.previewLine.setOptions({ icons: dashIcons(0.5) });
+      d.dotMarkers.forEach(m => m.setIcon({ ...m.getIcon(), strokeColor: cfg.color }));
     });
     container.appendChild(btn);
   }
 }
 
-renderFenceTypeBtns();
-
-// Gate type selection
-document.querySelectorAll('.gate-type-btn').forEach(btn => {
-  btn.addEventListener('click', () => {
-    state.gateType = btn.dataset.gate;
-    document.querySelectorAll('.gate-type-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-  });
-});
-
 // ─── ESTIMATE RENDERING ───────────────────────────────────────────────────────
 function buildEstimate() {
   const lines = [];
   let total = 0;
-
   for (const seg of state.segments) {
     const ft = segmentLengthFt(seg.points);
     const cfg = FENCE_TYPES[seg.type];
@@ -1230,13 +1049,11 @@ function buildEstimate() {
     total += cost;
     lines.push({ type: 'fence', label: `${cfg.label} — ${Math.round(ft)} ft`, cost, color: cfg.color });
   }
-
   for (const gate of state.gates) {
     const cfg = GATE_TYPES[gate.type];
     total += cfg.price;
     lines.push({ type: 'gate', label: cfg.label, cost: cfg.price });
   }
-
   return { lines, total };
 }
 
@@ -1244,60 +1061,35 @@ function renderEstimate() {
   const { lines, total } = buildEstimate();
   const list = document.getElementById('estimate-list');
   const totalRow = document.getElementById('estimate-total-row');
-  const totalEl = document.getElementById('estimate-total');
-  const empty = document.getElementById('estimate-empty');
-
   if (lines.length === 0) {
-    list.innerHTML = '';
-    list.appendChild(Object.assign(document.createElement('div'), {
-      id: 'estimate-empty',
-      textContent: 'Draw a fence to see your estimate',
-    }));
+    list.innerHTML = '<div id="estimate-empty">Draw a fence to see your estimate</div>';
     totalRow.style.display = 'none';
     return;
   }
-
   list.innerHTML = lines.map(l => `
     <div class="estimate-row${l.type === 'gate' ? ' gate-row' : ''}">
       <div class="e-swatch" style="background:${l.color ?? '#f4a818'}"></div>
       <div class="e-label">${l.label}</div>
       <div class="e-cost">$${Math.round(l.cost).toLocaleString()}</div>
     </div>`).join('');
-
   totalRow.style.display = 'flex';
-  totalEl.textContent = '$' + Math.round(total).toLocaleString();
+  document.getElementById('estimate-total').textContent = '$' + Math.round(total).toLocaleString();
 }
 
 // ─── ADDRESS SEARCH ───────────────────────────────────────────────────────────
-let searchDebounce;
-
-async function geocodeAddress(query) {
-  const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1&email=${CONFIG.geocoderEmail}`;
-  try {
-    const res = await fetch(url, { headers: { 'Accept': 'application/json' } });
-    const data = await res.json();
-    return data[0] ?? null;
-  } catch {
-    return null;
-  }
-}
-
-document.getElementById('search-btn').addEventListener('click', doSearch);
-document.getElementById('address-input').addEventListener('keydown', e => {
-  if (e.key === 'Enter') doSearch();
-});
-
-async function doSearch() {
+function doSearch() {
   const q = document.getElementById('address-input').value.trim();
   if (!q) return;
   document.getElementById('search-btn').textContent = '…';
-  const result = await geocodeAddress(q);
-  document.getElementById('search-btn').textContent = 'Find';
-  if (result) {
-    map.setView([parseFloat(result.lat), parseFloat(result.lon)], 20);
-  } else {
-    showToast('Address not found — try including city and state');
-  }
+  geocoder.geocode({ address: q }, (results, status) => {
+    document.getElementById('search-btn').textContent = 'Find';
+    if (status === 'OK' && results[0]) {
+      map.setCenter(results[0].geometry.location);
+      map.setZoom(20);
+    } else {
+      showToast('Address not found — try including city and state');
+    }
+  });
 }
 
 // ─── URL ENCODING / SHARING ───────────────────────────────────────────────────
@@ -1306,10 +1098,9 @@ function encodeStateToUrl() {
     const center = map.getCenter();
     const payload = {
       v: 1,
-      c: [parseFloat(center.lat.toFixed(6)), parseFloat(center.lng.toFixed(6)), map.getZoom()],
+      c: [parseFloat(center.lat().toFixed(6)), parseFloat(center.lng().toFixed(6)), map.getZoom()],
       s: state.segments.map(seg => ({
-        id: seg.id,
-        t: seg.type,
+        id: seg.id, t: seg.type,
         p: seg.points.map(p => [parseFloat(p[0].toFixed(6)), parseFloat(p[1].toFixed(6))]),
       })),
       g: state.gates.map(g => ({
@@ -1318,188 +1109,41 @@ function encodeStateToUrl() {
         frac: parseFloat(g.t.toFixed(4)),
       })),
     };
-    const json = JSON.stringify(payload);
-    const bytes = new TextEncoder().encode(json);
-    const binary = String.fromCharCode(...bytes);
-    const b64 = btoa(binary);
-    history.replaceState(null, '', '#' + b64);
-  } catch (e) {
-    console.warn('State encode failed', e);
-  }
+    const bytes = new TextEncoder().encode(JSON.stringify(payload));
+    history.replaceState(null, '', '#' + btoa(String.fromCharCode(...bytes)));
+  } catch (e) { console.warn('State encode failed', e); }
 }
 
 function loadStateFromUrl() {
   const hash = window.location.hash.slice(1);
   if (!hash) return false;
   try {
-    const binary = atob(hash);
-    const bytes = Uint8Array.from(binary, c => c.charCodeAt(0));
-    const json = new TextDecoder().decode(bytes);
-    const payload = JSON.parse(json);
+    const bytes = Uint8Array.from(atob(hash), c => c.charCodeAt(0));
+    const payload = JSON.parse(new TextDecoder().decode(bytes));
     if (payload.v !== 1) return false;
-
-    // Restore map position
-    if (payload.c) map.setView([payload.c[0], payload.c[1]], payload.c[2]);
-
-    // Restore segments
+    if (payload.c) { map.setCenter({ lat: payload.c[0], lng: payload.c[1] }); map.setZoom(payload.c[2]); }
     for (const sd of (payload.s ?? [])) {
       const cfg = FENCE_TYPES[sd.t];
       if (!cfg) continue;
-      const seg = {
-        id: sd.id,
-        type: sd.t,
-        points: sd.p,
-        polyline: L.polyline(sd.p.map(p => L.latLng(p)), {
-          color: cfg.color, weight: 5, opacity: 0.9, lineJoin: 'round',
-        }).addTo(map),
-      };
+      const polyline = new google.maps.Polyline({
+        path: sd.p.map(p => ({ lat: p[0], lng: p[1] })),
+        strokeColor: cfg.color, strokeWeight: 5, strokeOpacity: 0.9, map,
+      });
+      const seg = { id: sd.id, type: sd.t, points: sd.p, polyline };
       bindSegmentEvents(seg);
       state.segments.push(seg);
     }
-
-    // Restore gates
     for (const gd of (payload.g ?? [])) {
       const seg = state.segments.find(s => s.id === gd.sid);
       if (!seg) continue;
-      const ll = gd.ll;
-      // Re-derive position from t in case of floating point drift
-      const derivedPt = pointAtT(seg.points, gd.frac);
-      const latlng = derivedPt ?? ll;
+      const latlng = pointAtT(seg.points, gd.frac) ?? gd.ll;
       const marker = createGateMarker(latlng, gd.t, gd.id);
-      marker.addTo(map);
       state.gates.push({ id: gd.id, segmentId: gd.sid, type: gd.t, latlng, t: gd.frac, marker });
     }
-
     renderEstimate();
     return true;
-  } catch (e) {
-    console.warn('State decode failed', e);
-    return false;
-  }
+  } catch (e) { console.warn('State decode failed', e); return false; }
 }
-
-// ─── SHARE ────────────────────────────────────────────────────────────────────
-document.getElementById('share-btn').addEventListener('click', async () => {
-  encodeStateToUrl();
-  const url = window.location.href;
-  try {
-    await navigator.clipboard.writeText(url);
-    showToast('Link copied! Send it via text or email.');
-  } catch {
-    prompt('Copy this link:', url);
-  }
-});
-
-// ─── CLEAR ────────────────────────────────────────────────────────────────────
-document.getElementById('clear-btn').addEventListener('click', () => {
-  if (state.segments.length === 0 && state.gates.length === 0) return;
-  if (!confirm('Clear all fence segments and gates?')) return;
-  state.segments.forEach(s => map.removeLayer(s.polyline));
-  state.gates.forEach(g => { if (g.marker) map.removeLayer(g.marker); });
-  state.segments = [];
-  state.gates = [];
-  cancelDrawing();
-  renderEstimate();
-  history.replaceState(null, '', window.location.pathname);
-  if (state.mode === 'draw') startDrawing();
-  showToast('Canvas cleared');
-});
-
-// ─── QUOTE MODAL ──────────────────────────────────────────────────────────────
-document.getElementById('quote-btn').addEventListener('click', openQuoteModal);
-document.getElementById('form-cancel').addEventListener('click', closeQuoteModal);
-document.getElementById('quote-modal').addEventListener('click', (e) => {
-  if (e.target === document.getElementById('quote-modal')) closeQuoteModal();
-});
-
-function openQuoteModal() {
-  const { lines, total } = buildEstimate();
-
-  const preview = document.getElementById('modal-preview');
-  if (total > 0) {
-    const desc = lines.map(l => l.label).join(', ');
-    preview.innerHTML = `Your design: <em>${desc}</em><strong>Estimated Total: $${Math.round(total).toLocaleString()}</strong>`;
-  } else {
-    preview.innerHTML = `No fence drawn yet — we'll work with you to design it!`;
-  }
-
-  document.getElementById('quote-modal').classList.remove('hidden');
-  document.getElementById('f-name').focus();
-}
-
-function closeQuoteModal() {
-  document.getElementById('quote-modal').classList.add('hidden');
-  // Reset form state
-  document.getElementById('quote-form').style.display = 'flex';
-  document.querySelector('.success-box')?.remove();
-  document.getElementById('form-submit').disabled = false;
-  document.getElementById('form-submit').textContent = 'Send My Design';
-}
-
-document.getElementById('quote-form').addEventListener('submit', async (e) => {
-  e.preventDefault();
-  const btn = document.getElementById('form-submit');
-  btn.disabled = true;
-  btn.textContent = 'Sending…';
-
-  encodeStateToUrl();
-
-  const { lines, total } = buildEstimate();
-  const name  = document.getElementById('f-name').value.trim();
-  const phone = document.getElementById('f-phone').value.trim();
-  const email = document.getElementById('f-email').value.trim();
-
-  const primaryService = state.segments.length > 0
-    ? FENCE_TYPES[state.segments[0].type]?.label ?? 'Fence Installation'
-    : 'Fence Installation';
-
-  const description = lines.length > 0
-    ? lines.map(l => l.label).join('; ') + `. Estimated total: $${Math.round(total).toLocaleString()}`
-    : 'Customer submitted a fence design (no segments drawn)';
-
-  const payload = {
-    name, phone, email,
-    source: 'fence_designer',
-    service_requested: primaryService,
-    description,
-    estimated_value: Math.round(total),
-    urgency: 'standard',
-    design: {
-      shareUrl: window.location.href,
-      segments: state.segments.map(s => ({
-        type: s.type,
-        length_ft: Math.round(segmentLengthFt(s.points)),
-        points: s.points,
-      })),
-      gates: state.gates.map(g => ({ type: g.type, latlng: g.latlng })),
-      line_items: lines,
-      subtotal: Math.round(total),
-    },
-  };
-
-  try {
-    await fetch(CONFIG.webhookUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    });
-  } catch {
-    // Webhook may not be configured in dev — don't block the UX
-  }
-
-  // Show success
-  const form = document.getElementById('quote-form');
-  form.style.display = 'none';
-  const box = document.querySelector('.modal-box');
-  const success = document.createElement('div');
-  success.className = 'success-box';
-  success.innerHTML = `
-    <div class="success-icon">✅</div>
-    <h3>We've got your design!</h3>
-    <p>Thanks, ${name.split(' ')[0]}! We'll reach out to ${phone} shortly to schedule your free on-site estimate.<br><br>
-    Questions? Call us at <a href="tel:${CONFIG.businessPhone}">${CONFIG.businessPhone}</a>.</p>`;
-  box.appendChild(success);
-});
 
 // ─── TOAST ────────────────────────────────────────────────────────────────────
 let toastTimer;
@@ -1511,28 +1155,178 @@ function showToast(msg) {
   toastTimer = setTimeout(() => el.classList.remove('show'), 3000);
 }
 
-// ─── MOBILE PANEL TOGGLE ──────────────────────────────────────────────────────
-document.getElementById('mobile-toggle').addEventListener('click', () => {
-  document.getElementById('panel').classList.toggle('open');
-});
-
-// ─── INIT ─────────────────────────────────────────────────────────────────────
-const restoredFromUrl = loadStateFromUrl();
-
-// Initialize in draw mode
-setMode('draw');
-
-// Save center on map move
-let saveTimer;
-map.on('moveend', () => {
-  clearTimeout(saveTimer);
-  saveTimer = setTimeout(encodeStateToUrl, 500);
-});
-
-// Welcome toast for fresh sessions
-if (!restoredFromUrl) {
-  setTimeout(() => showToast('Search your address above to get started!'), 800);
+// ─── QUOTE MODAL ──────────────────────────────────────────────────────────────
+function openQuoteModal() {
+  const { lines, total } = buildEstimate();
+  const preview = document.getElementById('modal-preview');
+  preview.innerHTML = total > 0
+    ? `Your design: <em>${lines.map(l => l.label).join(', ')}</em><strong>Estimated Total: $${Math.round(total).toLocaleString()}</strong>`
+    : `No fence drawn yet — we'll work with you to design it!`;
+  document.getElementById('quote-modal').classList.remove('hidden');
+  document.getElementById('f-name').focus();
 }
+
+function closeQuoteModal() {
+  document.getElementById('quote-modal').classList.add('hidden');
+  document.getElementById('quote-form').style.display = 'flex';
+  document.querySelector('.success-box')?.remove();
+  document.getElementById('form-submit').disabled = false;
+  document.getElementById('form-submit').textContent = 'Send My Design';
+}
+
+// ─── GOOGLE MAPS ENTRY POINT ──────────────────────────────────────────────────
+window.initMap = function () {
+  map = new google.maps.Map(document.getElementById('map'), {
+    center: { lat: CONFIG.defaultCenter[0], lng: CONFIG.defaultCenter[1] },
+    zoom: CONFIG.defaultZoom,
+    mapTypeId: 'satellite',
+    tilt: 0,
+    disableDoubleClickZoom: true,
+    gestureHandling: 'greedy',
+    fullscreenControl: false,
+    mapTypeControl: false,
+    streetViewControl: false,
+    zoomControlOptions: { position: google.maps.ControlPosition.RIGHT_CENTER },
+  });
+
+  projectionOverlay = new google.maps.OverlayView();
+  projectionOverlay.draw = () => {};
+  projectionOverlay.setMap(map);
+
+  geocoder = new google.maps.Geocoder();
+
+  // ── Map click ────────────────────────────────────────────────────────────
+  let pendingClick = null;
+  map.addListener('click', (e) => {
+    if (state.mode === 'draw' && state.drawing.active) {
+      clearTimeout(pendingClick);
+      pendingClick = setTimeout(() => {
+        const pt = [e.latLng.lat(), e.latLng.lng()];
+        state.drawing.points.push(pt);
+        const color = FENCE_TYPES[state.fenceType].color;
+        const dot = new google.maps.Marker({
+          position: { lat: pt[0], lng: pt[1] }, map,
+          clickable: false,
+          icon: { path: google.maps.SymbolPath.CIRCLE, scale: 4, strokeColor: color, strokeWeight: 2, fillColor: '#fff', fillOpacity: 1 },
+        });
+        state.drawing.dotMarkers.push(dot);
+        if (state.drawing.points.length >= 2) {
+          const path = state.drawing.points.map(p => ({ lat: p[0], lng: p[1] }));
+          if (!state.drawing.activeLine) state.drawing.activeLine = makeDashedPolyline(path, color, 0.7);
+          else state.drawing.activeLine.setPath(path);
+        }
+      }, 220);
+      return;
+    }
+    if (state.mode === 'gate') placeGate(e.latLng);
+  });
+
+  map.addListener('dblclick', () => {
+    if (state.mode === 'draw' && state.drawing.active) {
+      clearTimeout(pendingClick);
+      finalizeDrawing();
+    }
+  });
+
+  // ── Mouse move ───────────────────────────────────────────────────────────
+  map.addListener('mousemove', (e) => {
+    if (state.mode === 'draw' && state.drawing.active && state.drawing.points.length >= 1) {
+      const pts = [...state.drawing.points.map(p => ({ lat: p[0], lng: p[1] })), { lat: e.latLng.lat(), lng: e.latLng.lng() }];
+      const color = FENCE_TYPES[state.fenceType].color;
+      if (!state.drawing.previewLine) state.drawing.previewLine = makeDashedPolyline(pts, color, 0.5);
+      else state.drawing.previewLine.setPath(pts);
+      return;
+    }
+    if (state.mode === 'gate') {
+      const snap = closestOnSegments([e.latLng.lat(), e.latLng.lng()]);
+      if (snap.dist < 25 && snap.snapLatLng) {
+        const pos = { lat: snap.snapLatLng[0], lng: snap.snapLatLng[1] };
+        if (!state.snapIndicator) {
+          state.snapIndicator = new google.maps.Marker({
+            position: pos, map, zIndex: 1000,
+            icon: { path: google.maps.SymbolPath.CIRCLE, scale: 7, strokeColor: '#f4a818', strokeWeight: 2, fillOpacity: 0 },
+          });
+        } else { state.snapIndicator.setPosition(pos); }
+      } else if (state.snapIndicator) { state.snapIndicator.setMap(null); state.snapIndicator = null; }
+    }
+  });
+
+  // ── Idle — save URL state ─────────────────────────────────────────────────
+  let saveTimer;
+  map.addListener('idle', () => { clearTimeout(saveTimer); saveTimer = setTimeout(encodeStateToUrl, 500); });
+
+  // ── Keyboard ──────────────────────────────────────────────────────────────
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && state.mode === 'draw' && state.drawing.active) finalizeDrawing();
+    if (e.key === 'Escape' && state.mode === 'draw' && state.drawing.active) { cancelDrawing(); startDrawing(); }
+  });
+
+  // ── UI event wiring ───────────────────────────────────────────────────────
+  document.querySelectorAll('.mode-btn').forEach(btn => btn.addEventListener('click', () => setMode(btn.dataset.mode)));
+  document.querySelectorAll('.gate-type-btn').forEach(btn => btn.addEventListener('click', () => {
+    state.gateType = btn.dataset.gate;
+    document.querySelectorAll('.gate-type-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+  }));
+  document.getElementById('search-btn').addEventListener('click', doSearch);
+  document.getElementById('address-input').addEventListener('keydown', e => { if (e.key === 'Enter') doSearch(); });
+  document.getElementById('share-btn').addEventListener('click', async () => {
+    encodeStateToUrl();
+    try { await navigator.clipboard.writeText(window.location.href); showToast('Link copied! Send it via text or email.'); }
+    catch { prompt('Copy this link:', window.location.href); }
+  });
+  document.getElementById('clear-btn').addEventListener('click', () => {
+    if (state.segments.length === 0 && state.gates.length === 0) return;
+    if (!confirm('Clear all fence segments and gates?')) return;
+    state.segments.forEach(s => s.polyline.setMap(null));
+    state.gates.forEach(g => g.marker?.setMap(null));
+    state.segments = []; state.gates = [];
+    cancelDrawing(); renderEstimate();
+    history.replaceState(null, '', window.location.pathname);
+    if (state.mode === 'draw') startDrawing();
+    showToast('Canvas cleared');
+  });
+  document.getElementById('quote-btn').addEventListener('click', openQuoteModal);
+  document.getElementById('form-cancel').addEventListener('click', closeQuoteModal);
+  document.getElementById('quote-modal').addEventListener('click', (e) => { if (e.target === document.getElementById('quote-modal')) closeQuoteModal(); });
+  document.getElementById('quote-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = document.getElementById('form-submit');
+    btn.disabled = true; btn.textContent = 'Sending…';
+    encodeStateToUrl();
+    const { lines, total } = buildEstimate();
+    const name  = document.getElementById('f-name').value.trim();
+    const phone = document.getElementById('f-phone').value.trim();
+    const email = document.getElementById('f-email').value.trim();
+    const payload = {
+      name, phone, email, source: 'fence_designer', urgency: 'standard',
+      service_requested: state.segments.length > 0 ? FENCE_TYPES[state.segments[0].type]?.label ?? 'Fence Installation' : 'Fence Installation',
+      description: lines.length > 0 ? lines.map(l => l.label).join('; ') + `. Estimated total: $${Math.round(total).toLocaleString()}` : 'Customer submitted a fence design (no segments drawn)',
+      estimated_value: Math.round(total),
+      design: {
+        shareUrl: window.location.href,
+        segments: state.segments.map(s => ({ type: s.type, length_ft: Math.round(segmentLengthFt(s.points)), points: s.points })),
+        gates: state.gates.map(g => ({ type: g.type, latlng: g.latlng })),
+        line_items: lines, subtotal: Math.round(total),
+      },
+    };
+    try { await fetch(CONFIG.webhookUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }); } catch {}
+    document.getElementById('quote-form').style.display = 'none';
+    const success = document.createElement('div');
+    success.className = 'success-box';
+    success.innerHTML = `<div class="success-icon">✅</div><h3>We've got your design!</h3>
+      <p>Thanks, ${name.split(' ')[0]}! We'll reach out to ${phone} shortly to schedule your free on-site estimate.<br><br>
+      Questions? Call us at <a href="tel:${CONFIG.businessPhone}">${CONFIG.businessPhone}</a>.</p>`;
+    document.querySelector('.modal-box').appendChild(success);
+  });
+  document.getElementById('mobile-toggle').addEventListener('click', () => document.getElementById('panel').classList.toggle('open'));
+
+  // ── Init ──────────────────────────────────────────────────────────────────
+  renderFenceTypeBtns();
+  const restoredFromUrl = loadStateFromUrl();
+  setMode('draw');
+  if (!restoredFromUrl) setTimeout(() => showToast('Search your address above to get started!'), 800);
+};
 </script>
 </body>
 </html>
