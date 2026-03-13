@@ -80,6 +80,14 @@ body {
     color: var(--accent-dark);
 }
 
+.nav-menu a.btn {
+    color: var(--primary);
+}
+
+.nav-menu a.btn:hover {
+    color: var(--primary);
+}
+
 .mobile-menu-toggle {
     display: none;
     flex-direction: column;
