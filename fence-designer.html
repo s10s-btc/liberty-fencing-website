@@ -920,7 +920,7 @@
 
 // ─── CONFIG ───────────────────────────────────────────────────────────────────
 const CONFIG = {
-  webhookUrl: 'https://fencepostos-production.up.railway.app/leads',
+  webhookUrl: 'https://script.google.com/macros/s/AKfycbyZq7_Bf4UFkBo9DHq6-gvr85N7Z-cX_fAT9KJujDpM8Rl6Ir9KfoQx_543Fyx9-vo/exec',
   businessPhone: '573-222-0021',
   businessName: 'Liberty Fencing',
   defaultCenter: [37.7817, -90.4218], // Farmington, MO
@@ -1600,7 +1600,7 @@ window.initMap = function () {
         line_items: lines, subtotal: Math.round(total),
       },
     };
-    try { await fetch(CONFIG.webhookUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }); } catch {}
+    try { await fetch(CONFIG.webhookUrl, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify(payload) }); } catch {}
     document.getElementById('quote-form').style.display = 'none';
     const success = document.createElement('div');
     success.className = 'success-box';
