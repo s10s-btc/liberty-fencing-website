@@ -927,7 +927,8 @@ const CONFIG = {
   defaultZoom: 18,
 };
 
-const FENCE_TYPES = {
+// Defaults — overwritten by live prices from dashboard on load
+let FENCE_TYPES = {
   wood_pine:  { label: 'Wood (Treated Pine)', pricePerFt: 35, color: '#e67e22', weight: 4 },
   wood_cedar: { label: 'Wood (Cedar)',         pricePerFt: 42, color: '#c0392b', weight: 4 },
   vinyl:      { label: 'Vinyl Privacy',        pricePerFt: 67, color: '#27ae60', weight: 4 },
@@ -935,10 +936,37 @@ const FENCE_TYPES = {
   aluminum:   { label: 'Aluminum Ornamental',  pricePerFt: 46, color: '#2980b9', weight: 4 },
 };
 
-const GATE_TYPES = {
+let GATE_TYPES = {
   single: { label: 'Single Gate',       price: 700,  w: 28, h: 16 },
   double: { label: 'Double/Drive Gate', price: 1400, w: 40, h: 16 },
 };
+
+// Load live prices from Google Sheet
+(async function loadLivePrices() {
+  try {
+    const r = await fetch(CONFIG.webhookUrl + '?action=products');
+    const data = await r.json();
+    if (!data.products || data.products.length === 0) return;
+    const fences = {};
+    const gates = {};
+    data.products.forEach(p => {
+      if (p.Category === 'gate') {
+        gates[p.Type] = { label: p.Label, price: Number(p['Price Per Ft']) || 0, w: p.Type === 'double_gate' ? 40 : 28, h: 16 };
+      } else {
+        fences[p.Type] = { label: p.Label, pricePerFt: Number(p['Price Per Ft']) || 0, color: p.Color || '#333', weight: 4 };
+      }
+    });
+    if (Object.keys(fences).length > 0) FENCE_TYPES = fences;
+    if (Object.keys(gates).length > 0) GATE_TYPES = gates;
+    // Set default fence type to first available
+    if (!FENCE_TYPES[state.fenceType]) state.fenceType = Object.keys(FENCE_TYPES)[0];
+    if (!GATE_TYPES[state.gateType]) state.gateType = Object.keys(GATE_TYPES)[0];
+    // Re-render the type buttons with live prices
+    if (typeof renderFenceTypeBtns === 'function') renderFenceTypeBtns();
+  } catch (e) {
+    // Silently fall back to hardcoded defaults
+  }
+})();
 
 const isTouch = () => navigator.maxTouchPoints > 0;
 
