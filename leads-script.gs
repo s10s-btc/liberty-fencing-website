@@ -23,11 +23,20 @@ function doPost(e) {
 function doGet(e) {
   var params = e.parameter || {};
   var action = params.action || "status";
+  var callback = params.callback || "";
 
-  if (action === "leads") return handleGetLeads();
-  if (action === "products") return handleGetProducts();
+  var result;
+  if (action === "leads") result = getLeadsData();
+  else if (action === "products") result = getProductsData();
+  else result = { status: "ok" };
 
-  return jsonOut({ status: "ok" });
+  // JSONP support — wrap in callback for cross-origin script tags
+  if (callback) {
+    return ContentService
+      .createTextOutput(callback + "(" + JSON.stringify(result) + ")")
+      .setMimeType(ContentService.MimeType.JAVASCRIPT);
+  }
+  return jsonOut(result);
 }
 
 // ── LEADS ──
@@ -61,10 +70,10 @@ function handleNewLead(data) {
   return jsonOut({ success: true });
 }
 
-function handleGetLeads() {
+function getLeadsData() {
   var sheet = getOrCreateSheet(LEADS_SHEET, ["Date", "Name", "Phone", "Email", "Service", "Description", "Estimated Value", "Design URL", "Status"]);
   var data = sheet.getDataRange().getValues();
-  if (data.length <= 1) return jsonOut({ leads: [] });
+  if (data.length <= 1) return { leads: [] };
 
   var headers = data[0];
   var leads = [];
@@ -76,14 +85,16 @@ function handleGetLeads() {
     row._row = i + 1;
     leads.push(row);
   }
-  return jsonOut({ leads: leads });
+  return { leads: leads };
 }
 
+function handleGetLeads() { return jsonOut(getLeadsData()); }
+
 // ── PRODUCTS ──
-function handleGetProducts() {
+function getProductsData() {
   var sheet = getOrCreateSheet(PRODUCTS_SHEET, ["ID", "Type", "Label", "Price Per Ft", "Color", "Category"]);
   var data = sheet.getDataRange().getValues();
-  if (data.length <= 1) return jsonOut({ products: [] });
+  if (data.length <= 1) return { products: [] };
 
   var headers = data[0];
   var products = [];
@@ -94,8 +105,10 @@ function handleGetProducts() {
     }
     products.push(row);
   }
-  return jsonOut({ products: products });
+  return { products: products };
 }
+
+function handleGetProducts() { return jsonOut(getProductsData()); }
 
 function handleSaveProduct(data) {
   var sheet = getOrCreateSheet(PRODUCTS_SHEET, ["ID", "Type", "Label", "Price Per Ft", "Color", "Category"]);

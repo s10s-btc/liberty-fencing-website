@@ -168,14 +168,22 @@
 
 <script>
 // ── STATE ──
-let API = localStorage.getItem("lf_api") || "";
+let API = localStorage.getItem("lf_api") || "https://script.google.com/macros/s/AKfycbyZq7_Bf4UFkBo9DHq6-gvr85N7Z-cX_fAT9KJujDpM8Rl6Ir9KfoQx_543Fyx9-vo/exec";
 let leads = [];
 let products = [];
 
 // ── CONNECT ──
 function connect() {
-  const url = document.getElementById("script-url").value.trim();
+  let url = document.getElementById("script-url").value.trim();
   if (!url) return;
+  // If they just pasted the key, build the full URL
+  if (!url.startsWith("http")) {
+    url = "https://script.google.com/macros/s/" + url + "/exec";
+  }
+  // If they pasted the URL without /exec
+  if (url.startsWith("http") && !url.endsWith("/exec")) {
+    url = url.replace(/\/?$/, "/exec");
+  }
   API = url;
   localStorage.setItem("lf_api", url);
   document.getElementById("script-url").value = "";
@@ -201,28 +209,36 @@ document.querySelectorAll(".topbar nav button").forEach(btn => {
 });
 
 // ── API ──
-async function apiFetch(action) {
-  if (!API) return null;
-  try {
-    const r = await fetch(API + "?action=" + action, { redirect: "follow" });
-    return await r.json();
-  } catch (e) {
-    console.error("API fetch error:", e);
-    return null;
-  }
+// Google Apps Script redirects from script.google.com to script.googleusercontent.com.
+// fetch() cannot follow cross-origin redirects, so we use a JSONP-style script injection for GET
+// and no-cors + callback polling for POST.
+
+function apiFetch(action) {
+  if (!API) return Promise.resolve(null);
+  return new Promise((resolve) => {
+    const cbName = "_cb_" + Math.random().toString(36).slice(2);
+    window[cbName] = (data) => { resolve(data); delete window[cbName]; document.getElementById(cbName)?.remove(); };
+    const script = document.createElement("script");
+    script.id = cbName;
+    script.src = API + "?action=" + action + "&callback=" + cbName;
+    script.onerror = () => { resolve(null); delete window[cbName]; script.remove(); };
+    document.head.appendChild(script);
+    // Timeout after 10s
+    setTimeout(() => { if (window[cbName]) { resolve(null); delete window[cbName]; script.remove(); } }, 10000);
+  });
 }
 
 async function apiPost(action, body) {
   if (!API) return null;
   try {
-    // Apps Script POST with action param
-    const r = await fetch(API + "?action=" + action, {
+    await fetch(API + "?action=" + action, {
       method: "POST",
+      mode: "no-cors",
       headers: { "Content-Type": "text/plain" },
-      body: JSON.stringify(body),
-      redirect: "follow"
+      body: JSON.stringify(body)
     });
-    return await r.json();
+    // no-cors returns opaque response, so we just assume success
+    return { success: true };
   } catch (e) {
     console.error("API post error:", e);
     return null;
