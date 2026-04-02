@@ -9,6 +9,14 @@
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
 
+  /* ── LOGIN SCREEN ── */
+  .login-screen { display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+  .login-box { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 40px; width: 360px; max-width: 90vw; text-align: center; }
+  .login-box h1 { color: var(--accent); margin-bottom: 8px; font-size: 22px; }
+  .login-box p { color: var(--muted); font-size: 14px; margin-bottom: 24px; }
+  .app-wrap { display: none; }
+  .app-wrap.unlocked { display: block; }
+
   /* ── NAV ── */
   .topbar { background: var(--surface); border-bottom: 1px solid var(--border); padding: 12px 24px; display: flex; align-items: center; gap: 24px; position: sticky; top: 0; z-index: 100; }
   .topbar h1 { font-size: 18px; color: var(--accent); white-space: nowrap; }
@@ -94,16 +102,22 @@
 </head>
 <body>
 
+<!-- ════════ ACCESS DENIED SCREEN ════════ -->
+<div class="login-screen" id="login-screen">
+  <div class="login-box">
+    <h1>Liberty Fencing</h1>
+    <p>You need an access link to view this page.</p>
+  </div>
+</div>
+
+<!-- ════════ APP (hidden until login) ════════ -->
+<div class="app-wrap" id="app-wrap">
 <div class="topbar">
   <h1>Liberty Fencing</h1>
   <nav>
     <button class="active" data-page="leads">Leads</button>
     <button data-page="products">Products</button>
   </nav>
-  <div class="login-bar" id="login-bar">
-    <input type="text" id="script-url" placeholder="Paste your Apps Script URL" />
-    <button onclick="connect()">Connect</button>
-  </div>
 </div>
 
 <!-- ════════ LEADS PAGE ════════ -->
@@ -166,37 +180,32 @@
   </div>
 </div>
 
+</div><!-- /app-wrap -->
+
 <script>
+// ── MAGIC LINK AUTH ──
+const VALID_KEY = "c852cc6a8839da25add9c8a0";
+
+function getKey() {
+  const params = new URLSearchParams(window.location.search);
+  return params.get("key") || "";
+}
+
 // ── STATE ──
-let API = localStorage.getItem("lf_api") || "https://script.google.com/macros/s/AKfycbyZq7_Bf4UFkBo9DHq6-gvr85N7Z-cX_fAT9KJujDpM8Rl6Ir9KfoQx_543Fyx9-vo/exec";
+const API = "https://script.google.com/macros/s/AKfycbyZq7_Bf4UFkBo9DHq6-gvr85N7Z-cX_fAT9KJujDpM8Rl6Ir9KfoQx_543Fyx9-vo/exec";
 let leads = [];
 let products = [];
 
-// ── CONNECT ──
-function connect() {
-  let url = document.getElementById("script-url").value.trim();
-  if (!url) return;
-  // If they just pasted the key, build the full URL
-  if (!url.startsWith("http")) {
-    url = "https://script.google.com/macros/s/" + url + "/exec";
-  }
-  // If they pasted the URL without /exec
-  if (url.startsWith("http") && !url.endsWith("/exec")) {
-    url = url.replace(/\/?$/, "/exec");
-  }
-  API = url;
-  localStorage.setItem("lf_api", url);
-  document.getElementById("script-url").value = "";
-  document.getElementById("login-bar").innerHTML = '<span style="color:var(--green);font-size:13px;">Connected</span>';
+function unlock() {
+  document.getElementById("login-screen").style.display = "none";
+  document.getElementById("app-wrap").classList.add("unlocked");
   loadAll();
 }
 
-// On load — restore saved URL
-if (API) {
-  document.getElementById("script-url").value = "";
-  document.getElementById("login-bar").innerHTML = '<span style="color:var(--green);font-size:13px;">Connected</span>';
-  loadAll();
+if (getKey() === VALID_KEY) {
+  unlock();
 }
+
 
 // ── NAV ──
 document.querySelectorAll(".topbar nav button").forEach(btn => {
@@ -209,38 +218,31 @@ document.querySelectorAll(".topbar nav button").forEach(btn => {
 });
 
 // ── API ──
-// Google Apps Script redirects from script.google.com to script.googleusercontent.com.
-// fetch() cannot follow cross-origin redirects, so we use a JSONP-style script injection for GET
-// and no-cors + callback polling for POST.
-
-function apiFetch(action) {
-  if (!API) return Promise.resolve(null);
-  return new Promise((resolve) => {
-    const cbName = "_cb_" + Math.random().toString(36).slice(2);
-    window[cbName] = (data) => { resolve(data); delete window[cbName]; document.getElementById(cbName)?.remove(); };
-    const script = document.createElement("script");
-    script.id = cbName;
-    script.src = API + "?action=" + action + "&callback=" + cbName;
-    script.onerror = () => { resolve(null); delete window[cbName]; script.remove(); };
-    document.head.appendChild(script);
-    // Timeout after 10s
-    setTimeout(() => { if (window[cbName]) { resolve(null); delete window[cbName]; script.remove(); } }, 10000);
-  });
+async function apiFetch(action) {
+  if (!API) return null;
+  try {
+    // Google Apps Script redirects to googleusercontent.com — fetch follows it fine for GET
+    const r = await fetch(API + "?action=" + action);
+    return await r.json();
+  } catch (e) {
+    console.error("apiFetch error:", action, e);
+    return null;
+  }
 }
 
 async function apiPost(action, body) {
   if (!API) return null;
   try {
+    // POST to Apps Script — use no-cors to avoid preflight CORS block
     await fetch(API + "?action=" + action, {
       method: "POST",
       mode: "no-cors",
       headers: { "Content-Type": "text/plain" },
       body: JSON.stringify(body)
     });
-    // no-cors returns opaque response, so we just assume success
     return { success: true };
   } catch (e) {
-    console.error("API post error:", e);
+    console.error("apiPost error:", action, e);
     return null;
   }
 }
