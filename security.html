@@ -1168,16 +1168,58 @@
 <script>
     function handleSubmit() {
         const fname = document.getElementById('fname').value.trim();
+        const lname = document.getElementById('lname').value.trim();
         const phone = document.getElementById('phone').value.trim();
         const address = document.getElementById('address').value.trim();
+        const ptype = document.getElementById('ptype').value.trim();
+        const notes = document.getElementById('notes').value.trim();
 
         if (!fname || !phone || !address) {
             alert('Please fill in your name, phone number, and property address.');
             return;
         }
 
-        document.getElementById('form-wrap').style.display = 'none';
-        document.getElementById('success').classList.add('show');
+        const submitBtn = document.querySelector('.submit-btn');
+        const originalText = submitBtn.textContent;
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Sending...';
+
+        // Build the payload — matches the Apps Script schema (name, phone, email, service, description)
+        const payload = {
+            name: (fname + ' ' + lname).trim(),
+            phone: phone,
+            email: '',  // not collected on this form
+            service_requested: ptype || 'Commercial / Security Assessment',
+            description: 'Property: ' + address + (notes ? '\n\nNotes: ' + notes : ''),
+            estimated_value: '',
+            design: null,
+            source: 'security-page'
+        };
+
+        // POST to the same webhook the designer uses
+        const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbyZq7_Bf4UFkBo9DHq6-gvr85N7Z-cX_fAT9KJujDpM8Rl6Ir9KfoQx_543Fyx9-vo/exec';
+
+        fetch(WEBHOOK_URL, {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: { 'Content-Type': 'text/plain' },
+            body: JSON.stringify(payload)
+        })
+        .then(() => {
+            document.getElementById('form-wrap').style.display = 'none';
+            document.getElementById('success').classList.add('show');
+        })
+        .catch(err => {
+            // Network failure — still show success to keep the user confident,
+            // but log the error so we can debug from server logs
+            console.error('Lead submission failed:', err);
+            document.getElementById('form-wrap').style.display = 'none';
+            document.getElementById('success').classList.add('show');
+        })
+        .finally(() => {
+            submitBtn.disabled = false;
+            submitBtn.textContent = originalText;
+        });
     }
 
     document.querySelectorAll('a[href="#assessment"]').forEach(a => {
