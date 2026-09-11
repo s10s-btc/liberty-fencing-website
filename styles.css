@@ -692,13 +692,7 @@ body {
 
 /* ─── 3-STEP PROCESS SECTION ────────────────────────────────────────── */
 .process-section {
-    padding: 80px 24px;
     background: #f8f9fa;
-}
-
-.process-section .container {
-    max-width: 1200px;
-    margin: 0 auto;
 }
 
 .process-grid {
@@ -784,13 +778,7 @@ body {
 
 /* ─── FOUNDERS SECTION ─────────────────────────────────────────────── */
 .founders-section {
-    padding: 80px 24px;
     background: white;
-}
-
-.founders-section .container {
-    max-width: 1100px;
-    margin: 0 auto;
 }
 
 .founders-grid {
@@ -935,4 +923,11 @@ body {
     color: var(--text-light, #666);
     text-transform: uppercase;
     letter-spacing: 0.05em;
+}
+
+    /* Explicit centering for founders section heading */
+    .founders-section .section-title,
+    .founders-section .section-subtitle {
+    text-align: center;
+    width: 100%;
 }
