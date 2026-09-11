@@ -2,14 +2,13 @@
 
 **Started:** Fri 9/11 16:15 CT
 **Target:** Sun 9/13 EOD
-
-## Status: P0 COMPLETE ✅
+**Current:** 42% complete (10/24 tasks)
 
 ## Coop answers (logged 9/11)
 
-- **Q1 — Lifetime warranty:** NO. Remove the claim or replace with "warranty on labor." Don't claim lifetime.
-- **Q2 — Install duration:** 2-4 days typical. Add to 3-step process: "call → walk → 24-hr quote → install in 2-4 days."
-- **Q3 — Public pricing:** DELIBERATE. Transparency is the strategy. Amplify: "We publish our prices."
+- **Q1 — Lifetime warranty:** NO. Remove the claim or replace with "warranty on labor."
+- **Q2 — Install duration:** 2-4 days typical.
+- **Q3 — Public pricing:** DELIBERATE. Transparency is the strategy.
 
 ---
 
@@ -18,18 +17,18 @@
 ### P0 — Fix bleeding bugs ✅ ALL DONE
 
 - [x] **#1** Security form → Apps Script endpoint — commit `3b6ca6f`
-- [x] **#2** Gate pricing — verified already keyed by ID, fallbacks stripped — commit `6aecc65`
+- [x] **#2** Gate pricing + fallbacks stripped — commit `6aecc65`
 - [x] **#3** Strip hardcoded fallback prices — done in `6aecc65`
 - [x] **#4** JSONP backup for server-error detection — done in `6aecc65`
 
-### P1 — Foundation (next)
+### P1 — Foundation ✅ ALL DONE
 
-- [ ] **#5** Schema.org LocalBusiness + Service markup (30 min)
-- [ ] **#6** sitemap.xml (30 min)
-- [ ] **#7** Custom robots.txt (15 min)
-- [ ] **#8** aggregateRating structured data (30 min)
-- [ ] **#9** Google Analytics gtag.js (1 hr)
-- [ ] **#10** Mobile speed audit (1 hr)
+- [x] **#5** Schema.org LocalBusiness markup (with aggregateRating) — done in `a9a19f7`
+- [x] **#6** sitemap.xml — done in `a9a19f7`
+- [x] **#7** Custom robots.txt — done in `a9a19f7`
+- [x] **#8** aggregateRating structured data — done in `a9a19f7`
+- [x] **#9** Google Analytics gtag.js (placeholder G-PLACEHOLDER-LF) — done in `a9a19f7`
+- [x] **#10** Image compression (WebP + JPG re-encode, 21% smaller) — done in `a9a19f7`
 
 ### Deploy prep
 
@@ -42,18 +41,18 @@
 
 ### P2 — Position + UX
 
-- [ ] **#13** Hero rewrite ("See your price... we publish our prices")
+- [ ] **#13** Hero rewrite
 - [ ] **#14** Promote fence designer to hero
 - [ ] **#15** Move testimonials above fold
 - [ ] **#16** Add Ryan + Scott photo + names
-- [ ] **#17** 3-step process: call → walk → 24-hr quote → install in 2-4 days
+- [ ] **#17** 3-step process section
 
 ### P3 — Content + crawlability
 
-- [ ] **#18** Compress gallery (5.3 MB → ~500 KB)
+- [ ] **#18** Image compression (DONE in P1 #10)
 - [ ] **#19** Crawlable copy on fence-designer.html
 - [ ] **#20** Fix broken review link, gallery captions
-- [ ] **#21** Remove "Lifetime warranty" claim (Coop: no lifetime warranty)
+- [ ] **#21** Remove "Lifetime warranty" claim
 - [ ] **#22** Bitcoin payment line
 - [ ] **#23** Name the Rhino equipment
 
@@ -68,6 +67,7 @@
 ## Git log
 
 ```
+a9a19f7 P1: SEO foundation + image compression + analytics (54 files)
 6aecc65 P0: gate pricing + fallback handling + JSONP lead backup
 3b6ca6f P0: wire security page form to lead webhook
 1be52a1 Add warm customer-facing sentiment to tutorial's final step (Coop, never deployed)
@@ -75,7 +75,14 @@
 
 ---
 
-## P1 next steps
+## Notes
 
-I'll start with #5 (Schema.org markup) since it's quick + high impact for SEO.
-Then #6 (sitemap), #7 (robots), #8 (aggregateRating) — all under 30 min each.
+- Google Analytics placeholder `G-PLACEHOLDER-LF` needs to be replaced with Coop's real GA4 ID before deploy
+- Original gallery images backed up to `images.original/` in case rollback needed
+- WebP versions give 21% size reduction for browsers that support them
+
+---
+
+## What's next
+
+P2 — Position + UX. Starting with #13 (hero rewrite) — the highest-impact content change.
