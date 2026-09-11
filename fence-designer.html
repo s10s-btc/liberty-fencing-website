@@ -799,9 +799,22 @@
     <!-- Hint -->
     <div id="hint-bar">Click on the map to place fence points. Double-click or press Enter to finish a segment.</div>
 
-    <!-- Fence type -->
+    <!-- Estimate (segments list appears here as user draws) -->
+    <div>
+      <div class="section-label">Your Fence Segments</div>
+      <div id="estimate-list">
+        <div id="estimate-empty">Click on the map to start drawing your fence</div>
+      </div>
+      <div id="estimate-total-row" style="display:none">
+        <span class="total-label">Estimated Total</span>
+        <span class="total-value" id="estimate-total">$0</span>
+      </div>
+      <p id="estimate-note" style="margin-top:6px">Approximate pricing. Final quote confirmed at your free on-site estimate.</p>
+    </div>
+
+    <!-- Fence type (moved below - user can change after drawing) -->
     <div id="fence-type-section">
-      <div class="section-label">Fence Type</div>
+      <div class="section-label">Fence Type <span style="font-weight: normal; color: var(--text-light); font-size: 0.75rem;">(change anytime - applies to next segment)</span></div>
       <div id="fence-type-btns"></div>
     </div>
 
@@ -809,19 +822,6 @@
     <div id="gate-type-section" style="display:none">
       <div class="section-label">Gate Type</div>
       <div id="gate-type-btns"></div>
-    </div>
-
-    <!-- Estimate -->
-    <div>
-      <div class="section-label">Estimate</div>
-      <div id="estimate-list">
-        <div id="estimate-empty">Draw a fence to see your estimate</div>
-      </div>
-      <div id="estimate-total-row" style="display:none">
-        <span class="total-label">Estimated Total</span>
-        <span class="total-value" id="estimate-total">$0</span>
-      </div>
-      <p id="estimate-note" style="margin-top:6px">Approximate pricing. Final quote confirmed at your free on-site estimate.</p>
     </div>
   </div>
 
@@ -927,30 +927,20 @@ const CONFIG = {
 };
 
 // Defaults — overwritten by live prices from dashboard on load.
-// Keyed by product ID (unique) rather than Type, since Type is just the
-// material name and isn't guaranteed unique across rows in the sheet.
-let FENCE_TYPES = {
-  wood_pine:  { label: 'Wood (Treated Pine)', pricePerFt: 35, color: '#e67e22', weight: 4, type: 'wood_pine' },
-  wood_cedar: { label: 'Wood (Cedar)',         pricePerFt: 42, color: '#c0392b', weight: 4, type: 'wood_cedar' },
-  vinyl:      { label: 'Vinyl Privacy',        pricePerFt: 67, color: '#27ae60', weight: 4, type: 'vinyl' },
-  chain_link: { label: 'Chain Link',           pricePerFt: 20, color: '#95a5a6', weight: 4, type: 'chain_link' },
-  aluminum:   { label: 'Aluminum Ornamental',  pricePerFt: 46, color: '#2980b9', weight: 4, type: 'aluminum' },
-};
-
-// Every gate is tied to a specific fence Type via `fenceType` — there's no
-// universal gate. These fallback gates aren't tied to the fallback fence
-// types above; they only exist as a placeholder until the live sheet loads.
-let GATE_TYPES = {
-  single: { label: 'Single Gate',       price: 700,  w: 28, h: 16, fenceType: '' },
-  double: { label: 'Double/Drive Gate', price: 1400, w: 40, h: 16, fenceType: '' },
-};
+// Empty until live prices load from the sheet. If the sheet fetch fails,
+// we show "Call for pricing" instead of guessing prices.
+let FENCE_TYPES = {};
+let GATE_TYPES = {};
 
 // Load live prices from Google Sheet
 (async function loadLivePrices() {
   try {
     const r = await fetch(CONFIG.webhookUrl + '?action=products');
     const data = await r.json();
-    if (!data.products || data.products.length === 0) return;
+    if (!data.products || data.products.length === 0) {
+      console.warn('No products returned from sheet — showing "Call for pricing"');
+      return;
+    }
     const fences = {};
     const gates = {};
     data.products.forEach(p => {
@@ -976,7 +966,14 @@ let GATE_TYPES = {
     if (typeof renderFenceTypeBtns === 'function') renderFenceTypeBtns();
     if (typeof renderGateTypeBtns === 'function') renderGateTypeBtns();
   } catch (e) {
-    // Silently fall back to hardcoded defaults
+    // Live prices failed to load — show user-visible banner + log error
+    console.error('Live prices failed:', e);
+    const banner = document.createElement('div');
+    banner.id = 'pricing-error-banner';
+    banner.style.cssText = 'background:#fff3cd;color:#856404;padding:12px;border-radius:6px;margin-bottom:12px;font-size:0.85rem;border:1px solid #ffeeba;';
+    banner.innerHTML = '<b>Live pricing unavailable.</b> Estimates will show "Call for pricing" until we reconnect. Call <a href="tel:573-222-0021" style="color:#856404;text-decoration:underline;">573-222-0021</a> for a quote.';
+    const panel = document.getElementById('panel-scroll') || document.body;
+    if (panel) panel.insertBefore(banner, panel.firstChild);
   }
 })();
 
@@ -984,7 +981,9 @@ const isTouch = () => navigator.maxTouchPoints > 0;
 
 function getHint(mode) {
   if (mode === 'draw') {
-    if (!state.fenceType) return 'Choose a fence type below, then click the map to start drawing.';
+    if (!state.fenceType) return isTouch()
+      ? 'Tap the map to place fence points. Tap Finish Segment when done. (Choose fence type after.)'
+      : 'Click to place fence points. Double-click or press Enter to finish. Esc to cancel. (Choose fence type after.)';
     return isTouch()
       ? 'Tap the map to place fence points. Tap Finish Segment when done.'
       : 'Click to place fence points. Double-click or press Enter to finish. Esc to cancel.';
@@ -1152,6 +1151,12 @@ function cancelDrawing() {
 function finalizeDrawing() {
   const d = state.drawing;
   if (d.points.length < 2) { showToast('Draw at least 2 points to create a segment'); return; }
+
+  // Default to first available fence type if none selected yet (draw-first UX)
+  if (!state.fenceType) {
+    const types = Object.keys(FENCE_TYPES);
+    if (types.length > 0) state.fenceType = types[0];
+  }
 
   const id = uid();
   const cfg = FENCE_TYPES[state.fenceType];
@@ -1389,7 +1394,18 @@ function buildEstimate() {
   let total = 0;
   for (const seg of state.segments) {
     const cfg = FENCE_TYPES[seg.type];
-    if (!cfg) continue; // stale type from an old shared link — skip rather than crash
+    if (!cfg) {
+      // No live price for this fence type — show "Call for pricing" instead of silently misquoting
+      lines.push({
+        kind: 'fence',
+        color: '#999',
+        label: `${seg.type} — Call for pricing`,
+        feet: 0,
+        subtotal: 0,
+        callForPricing: true,
+      });
+      continue;
+    }
     const ft = segmentLengthFt(seg.points);
     const cost = Math.max(ft * cfg.pricePerFt, 0);
     total += cost;
@@ -1698,18 +1714,58 @@ window.initMap = function () {
         line_items: lines, subtotal: Math.round(total),
       },
     };
+    // Dual submission: POST via fetch (no-cors) + GET via JSONP (cors-friendly)
+    // POST is the primary path; GET is a backup if POST fails to detect server errors
     let submitFailed = false;
+    let serverConfirmed = false;
+
+    // Primary: POST (no-cors, opaque response)
     try {
       await fetch(CONFIG.webhookUrl, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify(payload) });
     } catch (err) {
-      console.error('Lead submission failed:', err);
+      console.error('Lead POST failed:', err);
       submitFailed = true;
     }
+
+    // Backup: GET via JSONP — can read the response, so we know if the server accepted it
+    try {
+      await new Promise((resolve, reject) => {
+        const cbName = '__lf_submit_' + Date.now() + '_' + Math.random().toString(36).slice(2);
+        window[cbName] = (data) => {
+          delete window[cbName];
+          document.body.removeChild(script);
+          if (data && data.success) serverConfirmed = true;
+          else submitFailed = true;
+          resolve();
+        };
+        const script = document.createElement('script');
+        // JSONP via GET — encode the lead in the URL (limited to ~2KB)
+        const compactPayload = {
+          name: payload.name,
+          phone: payload.phone,
+          email: payload.email,
+          source: payload.source,
+          service_requested: payload.service_requested,
+          estimated_value: payload.estimated_value,
+        };
+        const params = new URLSearchParams({
+          action: 'leadJsonp',
+          callback: cbName,
+          payload: JSON.stringify(compactPayload),
+        });
+        script.src = CONFIG.webhookUrl + '?' + params.toString();
+        script.onerror = () => { submitFailed = true; delete window[cbName]; reject(); };
+        document.body.appendChild(script);
+        // Timeout after 5s
+        setTimeout(() => { if (window[cbName]) { delete window[cbName]; submitFailed = true; resolve(); } }, 5000);
+      });
+    } catch (err) {
+      console.error('Lead JSONP backup failed:', err);
+    }
+
     document.getElementById('quote-form').style.display = 'none';
     const success = document.createElement('div');
     success.className = 'success-box';
-    // no-cors means we can't read the real HTTP status, so this only catches
-    // outright network failures (offline, DNS, unreachable) — not server-side errors.
     success.innerHTML = submitFailed
       ? `<div class="success-icon">⚠️</div><h3>Couldn't send your design</h3>
          <p>Looks like a connection issue on our end, ${name.split(' ')[0]}. Please call us directly so we don't lose your info: <a href="tel:${CONFIG.businessPhone}">${CONFIG.businessPhone}</a>.</p>`
