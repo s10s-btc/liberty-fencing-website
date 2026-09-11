@@ -904,9 +904,7 @@ body {
 .payment-section {
     background: #1a1a1a;
     color: white;
-    padding: 40px 24px;
-    text-align: center;
-}
+    text-align: center;}
 
 .payment-section h3 {
     font-size: 1.1rem;
