@@ -682,8 +682,9 @@ body {
 .hero-mini-trust {
     font-size: 0.85rem;
     color: var(--text-light, #666);
-    margin-top: 20px;
+    margin: 20px auto 0;
     max-width: 500px;
+    text-align: center;
 }
 
 .map-icon {
