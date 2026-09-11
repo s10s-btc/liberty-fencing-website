@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+Disallow: /dashboard.html
+Disallow: /_dev/
+
+Sitemap: https://liberty-fencing.com/sitemap.xml
+
+# Crawl-delay for politeness
+Crawl-delay: 1

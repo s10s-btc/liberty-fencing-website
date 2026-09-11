@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>UX Preview — Fence Designer Side Panel</title>
+<style>
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; padding: 20px; background: #f5f5f5; }
+  .container { display: flex; gap: 30px; max-width: 1400px; margin: 0 auto; }
+  .panel { width: 380px; background: white; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); padding: 0; overflow: hidden; }
+  .panel-header { background: #1f4e79; color: white; padding: 16px; }
+  .panel-header h2 { margin: 0; font-size: 1.1rem; }
+  .panel-body { padding: 16px; }
+  .section-label { font-size: 0.7rem; font-weight: 600; text-transform: uppercase; color: #666; letter-spacing: 0.5px; margin-bottom: 8px; }
+  .mode-toolbar { display: flex; gap: 8px; margin-bottom: 12px; }
+  .mode-btn { flex: 1; padding: 10px; border: 1px solid #ddd; background: white; border-radius: 6px; cursor: pointer; font-size: 0.85rem; }
+  .mode-btn.active { background: #1f4e79; color: white; border-color: #1f4e79; }
+  .hint { font-size: 0.8rem; color: #888; padding: 8px; background: #f8f8f8; border-radius: 4px; margin-bottom: 16px; }
+  .hint.new { background: #fff8e1; color: #b8860b; }
+  .segments { padding: 12px; background: #f9f9f9; border-radius: 6px; margin-bottom: 16px; min-height: 60px; }
+  .segment-item { padding: 8px 12px; background: white; border: 1px solid #e0e0e0; border-radius: 4px; margin-bottom: 6px; font-size: 0.85rem; display: flex; justify-content: space-between; }
+  .segment-color { width: 12px; height: 12px; border-radius: 2px; display: inline-block; margin-right: 8px; vertical-align: middle; }
+  .empty-state { color: #999; font-size: 0.85rem; font-style: italic; padding: 8px; text-align: center; }
+  .fence-type-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 16px; }
+  .type-btn { padding: 12px; border: 1px solid #e0e0e0; background: white; border-radius: 6px; cursor: pointer; }
+  .type-btn.active { border-color: #1f4e79; background: #f0f6fc; }
+  .type-name { font-size: 0.8rem; font-weight: 600; display: block; }
+  .type-price { font-size: 0.7rem; color: #666; }
+  .action-btn { width: 100%; padding: 14px; background: #1f4e79; color: white; border: none; border-radius: 6px; font-size: 1rem; font-weight: 600; cursor: pointer; }
+  .label-row { display: flex; justify-content: space-between; align-items: baseline; }
+  .helper-text { font-size: 0.75rem; color: #888; font-weight: normal; }
+  .arrow { font-size: 1.5rem; color: #1f4e79; align-self: center; }
+  .vs-label { font-size: 1.5rem; font-weight: bold; color: #1f4e79; text-align: center; margin: 20px 0; }
+</style>
+</head>
+<body>
+
+<h1 style="text-align: center; color: #1f4e79;">Fence Designer UX — Before vs After</h1>
+
+<div class="vs-label">↓  ↓  ↓</div>
+
+<div class="container">
+  <!-- BEFORE -->
+  <div class="panel">
+    <div class="panel-header">
+      <h2>BEFORE (live now)</h2>
+    </div>
+    <div class="panel-body">
+      <div class="section-label">Mode</div>
+      <div class="mode-toolbar">
+        <button class="mode-btn active">✏️ Draw Fence</button>
+        <button class="mode-btn">🚪 Add Gate</button>
+        <button class="mode-btn">🗑️ Delete</button>
+      </div>
+
+      <div class="hint"><b>Choose a fence type below, then click the map to start drawing.</b></div>
+
+      <div class="section-label">Fence Type</div>
+      <div class="fence-type-grid">
+        <button class="type-btn active"><span class="type-name">Wood (Treated Pine)</span><span class="type-price">$32/ft</span></button>
+        <button class="type-btn"><span class="type-name">Cedar</span><span class="type-price">$42/ft</span></button>
+        <button class="type-btn"><span class="type-name">Vinyl (White)</span><span class="type-price">$87/ft</span></button>
+        <button class="type-btn"><span class="type-name">Chain-link 4'</span><span class="type-price">$22/ft</span></button>
+      </div>
+
+      <div class="section-label">Estimate</div>
+      <div class="segments">
+        <div class="empty-state">Draw a fence to see your estimate</div>
+      </div>
+
+      <button class="action-btn">Get My Free Estimate →</button>
+    </div>
+  </div>
+
+  <div class="arrow">→</div>
+
+  <!-- AFTER -->
+  <div class="panel">
+    <div class="panel-header" style="background: #2e7d32;">
+      <h2>AFTER (new build)</h2>
+    </div>
+    <div class="panel-body">
+      <div class="section-label">Mode</div>
+      <div class="mode-toolbar">
+        <button class="mode-btn active">✏️ Draw Fence</button>
+        <button class="mode-btn">🚪 Add Gate</button>
+        <button class="mode-btn">🗑️ Delete</button>
+      </div>
+
+      <div class="hint new">Click on the map to start drawing your fence. <b>(Choose fence type after.)</b></div>
+
+      <div class="section-label">Your Fence Segments</div>
+      <div class="segments">
+        <div class="empty-state">Click on the map to start drawing your fence</div>
+      </div>
+
+      <div class="label-row">
+        <div class="section-label" style="margin-bottom: 0;">Fence Type</div>
+        <span class="helper-text">(change anytime — applies to next segment)</span>
+      </div>
+      <div class="fence-type-grid">
+        <button class="type-btn active"><span class="type-name">Wood (Treated Pine)</span><span class="type-price">$32/ft</span></button>
+        <button class="type-btn"><span class="type-name">Cedar</span><span class="type-price">$42/ft</span></button>
+        <button class="type-btn"><span class="type-name">Vinyl (White)</span><span class="type-price">$87/ft</span></button>
+        <button class="type-btn"><span class="type-name">Chain-link 4'</span><span class="type-price">$22/ft</span></button>
+      </div>
+
+      <button class="action-btn">Get My Free Estimate →</button>
+    </div>
+  </div>
+</div>
+
+<div class="vs-label">↑  ↑  ↑</div>
+
+<div style="max-width: 800px; margin: 30px auto; padding: 20px; background: white; border-radius: 8px;">
+  <h2 style="color: #1f4e79;">What changed (3 things)</h2>
+  <ol>
+    <li><b>Hint text:</b> Old: "Choose a fence type below, then click the map to start drawing." → New: "Click on the map to start drawing your fence. (Choose fence type after.)"</li>
+    <li><b>Panel order:</b> Fence Type used to be ABOVE Estimate. Now Estimate is ABOVE Fence Type.</li>
+    <li><b>Helper text:</b> New "(change anytime — applies to next segment)" added under Fence Type label.</li>
+  </ol>
+  <p style="margin-top: 20px;"><b>What didn't change:</b> Map drawing, fence type buttons, pricing math, lead form, gate placement — all identical.</p>
+</div>
+
+</body>
+</html>

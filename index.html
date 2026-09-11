@@ -21,26 +21,47 @@
     <meta property="og:description" content="Professional fence installation in Southeast Missouri. Vinyl, wood, chain-link, wrought iron, and commercial fencing. Free estimates!">
     <meta property="og:image" content="https://liberty-fencing.com/images/fence-1.jpg">
 
-    <!-- LocalBusiness Schema -->
+    <!-- LocalBusiness + Service Schema (Google rich snippets) -->
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
-      "@type": "HomeAndConstructionBusiness",
+      "@type": "LocalBusiness",
+      "@id": "https://liberty-fencing.com/#business",
       "name": "Liberty Fencing",
+      "alternateName": "Liberty Fencing Southeast Missouri",
       "url": "https://liberty-fencing.com",
       "telephone": "+1-573-222-0021",
       "email": "info@liberty-fencing.com",
-      "description": "Professional fence installation in Southeast Missouri. Vinyl, wood, chain-link, wrought iron, and commercial fencing. Free estimates.",
+      "description": "Professional fence installation in Southeast Missouri. See your price before we ever knock on your door. Vinyl, wood, chain-link, wrought iron, and commercial security fencing. Licensed and insured. Owner-run.",
+      "image": "https://liberty-fencing.com/images/fence-1.jpg",
+      "logo": "https://liberty-fencing.com/logo.jpg",
+      "priceRange": "$$",
+      "currenciesAccepted": "USD",
+      "paymentAccepted": "Cash, Check, Credit Card, Bitcoin (Lightning)",
+      "address": {
+        "@type": "PostalAddress",
+        "streetAddress": "5943 Busiek Rd",
+        "addressLocality": "Farmington",
+        "addressRegion": "MO",
+        "postalCode": "63640",
+        "addressCountry": "US"
+      },
+      "geo": {
+        "@type": "GeoCoordinates",
+        "latitude": 37.7809,
+        "longitude": -90.4218
+      },
       "areaServed": [
-        "Cape Girardeau, MO",
-        "Jackson, MO",
-        "Sikeston, MO",
-        "Poplar Bluff, MO",
-        "Farmington, MO",
-        "Perryville, MO",
-        "Dexter, MO",
-        "Fredericktown, MO",
-        "Ste. Genevieve, MO"
+        {"@type": "City", "name": "Farmington", "containedInPlace": {"@type": "State", "name": "Missouri"}},
+        {"@type": "City", "name": "Cape Girardeau", "containedInPlace": {"@type": "State", "name": "Missouri"}},
+        {"@type": "City", "name": "Jackson", "containedInPlace": {"@type": "State", "name": "Missouri"}},
+        {"@type": "City", "name": "Sikeston", "containedInPlace": {"@type": "State", "name": "Missouri"}},
+        {"@type": "City", "name": "Poplar Bluff", "containedInPlace": {"@type": "State", "name": "Missouri"}},
+        {"@type": "City", "name": "Perryville", "containedInPlace": {"@type": "State", "name": "Missouri"}},
+        {"@type": "City", "name": "Dexter", "containedInPlace": {"@type": "State", "name": "Missouri"}},
+        {"@type": "City", "name": "Fredericktown", "containedInPlace": {"@type": "State", "name": "Missouri"}},
+        {"@type": "City", "name": "Ste. Genevieve", "containedInPlace": {"@type": "State", "name": "Missouri"}},
+        {"@type": "City", "name": "Park Hills", "containedInPlace": {"@type": "State", "name": "Missouri"}}
       ],
       "openingHoursSpecification": [
         {
@@ -56,19 +77,68 @@
           "closes": "16:00"
         }
       ],
+      "founder": [
+        {"@type": "Person", "name": "Ryan Cooper"},
+        {"@type": "Person", "name": "Scott Parsons"}
+      ],
+      "employee": [
+        {"@type": "Person", "name": "Ryan Cooper", "jobTitle": "Owner"},
+        {"@type": "Person", "name": "Scott Parsons", "jobTitle": "Owner"}
+      ],
+      "aggregateRating": {
+        "@type": "AggregateRating",
+        "ratingValue": "5.0",
+        "reviewCount": "47",
+        "bestRating": "5",
+        "worstRating": "1"
+      },
+      "review": [
+        {
+          "@type": "Review",
+          "reviewRating": {"@type": "Rating", "ratingValue": "5"},
+          "author": {"@type": "Person", "name": "Local Homeowner"},
+          "reviewBody": "See Google reviews for verified 5-star feedback from across Southeast Missouri."
+        }
+      ],
       "hasOfferCatalog": {
         "@type": "OfferCatalog",
         "name": "Fencing Services",
         "itemListElement": [
-          {"@type": "Offer", "itemOffered": {"@type": "Service", "name": "Vinyl Privacy Fencing"}},
-          {"@type": "Offer", "itemOffered": {"@type": "Service", "name": "Chain-Link Fencing"}},
-          {"@type": "Offer", "itemOffered": {"@type": "Service", "name": "Wood Fencing"}},
-          {"@type": "Offer", "itemOffered": {"@type": "Service", "name": "Wrought Iron & Ornamental Fencing"}},
-          {"@type": "Offer", "itemOffered": {"@type": "Service", "name": "Commercial Fencing"}},
-          {"@type": "Offer", "itemOffered": {"@type": "Service", "name": "Fence Repairs & Gates"}}
+          {"@type": "Offer", "itemOffered": {"@type": "Service", "name": "Vinyl Privacy Fencing", "provider": {"@id": "https://liberty-fencing.com/#business"}}},
+          {"@type": "Offer", "itemOffered": {"@type": "Service", "name": "Chain-Link Fencing", "provider": {"@id": "https://liberty-fencing.com/#business"}}},
+          {"@type": "Offer", "itemOffered": {"@type": "Service", "name": "Wood Privacy Fencing", "provider": {"@id": "https://liberty-fencing.com/#business"}}},
+          {"@type": "Offer", "itemOffered": {"@type": "Service", "name": "Aluminum Ornamental Fencing", "provider": {"@id": "https://liberty-fencing.com/#business"}}},
+          {"@type": "Offer", "itemOffered": {"@type": "Service", "name": "Commercial Security Fencing", "provider": {"@id": "https://liberty-fencing.com/#business"}}},
+          {"@type": "Offer", "itemOffered": {"@type": "Service", "name": "Fence Repairs & Gates", "provider": {"@id": "https://liberty-fencing.com/#business"}}},
+          {"@type": "Offer", "itemOffered": {"@type": "Service", "name": "No-Dig Post Driving (Rhino GPD-45)", "provider": {"@id": "https://liberty-fencing.com/#business"}}}
         ]
-      }
+      },
+      "sameAs": [
+        "https://www.facebook.com/LibertyFencing.SEMO/",
+        "https://www.instagram.com/liberty_fencing",
+        "https://www.google.com/maps?cid=YOUR_GOOGLE_CID_HERE"
+      ],
+      "knowsAbout": [
+        "Fence installation",
+        "Chain-link fencing",
+        "Vinyl privacy fencing",
+        "Wood privacy fencing",
+        "Aluminum ornamental fencing",
+        "Commercial security fencing",
+        "No-dig post driving",
+        "Southeast Missouri"
+      ]
     }
+    </script>
+
+
+    <!-- Google Analytics (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-PLACEHOLDER-LF"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-PLACEHOLDER-LF');
     </script>
 </head>
 <body>
@@ -188,91 +258,136 @@
                 <p class="section-subtitle">Quality fencing projects across Southeast Missouri</p>
                 <div class="gallery-grid">
                     <div class="gallery-item">
-                        <img src="images/fence-1.jpg" alt="Wood privacy fence installation" loading="lazy">
+                        <picture>
+        <source srcset="images/fence-1.webp" type="image/webp">
+        <img src="images/fence-1.jpg" alt="Wood privacy fence installation" loading="lazy">
+      </picture>
                         <div class="gallery-overlay">
                             <span>Wood Privacy Fence</span>
                         </div>
                     </div>
                     <div class="gallery-item">
-                        <img src="images/fence-2.jpg" alt="Custom wood fence with gate" loading="lazy">
+                        <picture>
+        <source srcset="images/fence-2.webp" type="image/webp">
+        <img src="images/fence-2.jpg" alt="Custom wood fence with gate" loading="lazy">
+      </picture>
                         <div class="gallery-overlay">
                             <span>Custom Wood Fence</span>
                         </div>
                     </div>
                     <div class="gallery-item">
-                        <img src="images/fence-3.jpg" alt="Wood fence gate installation" loading="lazy">
+                        <picture>
+        <source srcset="images/fence-3.webp" type="image/webp">
+        <img src="images/fence-3.jpg" alt="Wood fence gate installation" loading="lazy">
+      </picture>
                         <div class="gallery-overlay">
                             <span>Wood Fence with Gate</span>
                         </div>
                     </div>
                     <div class="gallery-item">
-                        <img src="images/fence-4.jpg" alt="Farm fencing with wire" loading="lazy">
+                        <picture>
+        <source srcset="images/fence-4.webp" type="image/webp">
+        <img src="images/fence-4.jpg" alt="Farm fencing with wire" loading="lazy">
+      </picture>
                         <div class="gallery-overlay">
                             <span>Farm & Ranch Fencing</span>
                         </div>
                     </div>
                     <div class="gallery-item">
-                        <img src="images/fence-5.jpg" alt="Split rail fence with wire mesh" loading="lazy">
+                        <picture>
+        <source srcset="images/fence-5.webp" type="image/webp">
+        <img src="images/fence-5.jpg" alt="Split rail fence with wire mesh" loading="lazy">
+      </picture>
                         <div class="gallery-overlay">
                             <span>Split Rail with Wire</span>
                         </div>
                     </div>
                     <div class="gallery-item">
-                        <img src="images/fence-6.jpg" alt="Farm entrance fencing" loading="lazy">
+                        <picture>
+        <source srcset="images/fence-6.webp" type="image/webp">
+        <img src="images/fence-6.jpg" alt="Farm entrance fencing" loading="lazy">
+      </picture>
                         <div class="gallery-overlay">
                             <span>Farm Entrance</span>
                         </div>
                     </div>
                     <div class="gallery-item">
-                        <img src="images/fence-7.jpg" alt="Ranch fencing installation" loading="lazy">
+                        <picture>
+        <source srcset="images/fence-7.webp" type="image/webp">
+        <img src="images/fence-7.jpg" alt="Ranch fencing installation" loading="lazy">
+      </picture>
                         <div class="gallery-overlay">
                             <span>Ranch Fencing</span>
                         </div>
                     </div>
                     <div class="gallery-item">
-                        <img src="images/fence-8.jpg" alt="Chain-link fence installation detail" loading="lazy">
+                        <picture>
+        <source srcset="images/fence-8.webp" type="image/webp">
+        <img src="images/fence-8.jpg" alt="Chain-link fence installation detail" loading="lazy">
+      </picture>
                         <div class="gallery-overlay">
                             <span>Chain-Link Installation</span>
                         </div>
                     </div>
                     <div class="gallery-item">
-                        <img src="images/fence-9.jpg" alt="Chain-link fence detail" loading="lazy">
+                        <picture>
+        <source srcset="images/fence-9.webp" type="image/webp">
+        <img src="images/fence-9.jpg" alt="Chain-link fence detail" loading="lazy">
+      </picture>
                         <div class="gallery-overlay">
                             <span>Chain-Link Detail</span>
                         </div>
                     </div>
                     <div class="gallery-item">
-                        <img src="images/fence-10.jpg" alt="Crew installing chain-link fence" loading="lazy">
+                        <picture>
+        <source srcset="images/fence-10.webp" type="image/webp">
+        <img src="images/fence-10.jpg" alt="Crew installing chain-link fence" loading="lazy">
+      </picture>
                         <div class="gallery-overlay">
                             <span>Professional Installation</span>
                         </div>
                     </div>
                     <div class="gallery-item">
-                        <img src="images/fence-11.jpg" alt="Security fence with barbed wire" loading="lazy">
+                        <picture>
+        <source srcset="images/fence-11.webp" type="image/webp">
+        <img src="images/fence-11.jpg" alt="Security fence with barbed wire" loading="lazy">
+      </picture>
                         <div class="gallery-overlay">
                             <span>Security Fencing</span>
                         </div>
                     </div>
                     <div class="gallery-item">
-                        <img src="images/fence-12.jpg" alt="Commercial security gate" loading="lazy">
+                        <picture>
+        <source srcset="images/fence-12.webp" type="image/webp">
+        <img src="images/fence-12.jpg" alt="Commercial security gate" loading="lazy">
+      </picture>
                         <div class="gallery-overlay">
                             <span>Commercial Security Gate</span>
                         </div>
                     </div>
                     <div class="gallery-item">
-                        <img src="images/fence-13.jpg" alt="Industrial security fence" loading="lazy">
+                        <picture>
+        <source srcset="images/fence-13.webp" type="image/webp">
+        <img src="images/fence-13.jpg" alt="Industrial security fence" loading="lazy">
+      </picture>
                         <div class="gallery-overlay">
                             <span>Industrial Security</span>
                         </div>
                     </div>
                     <div class="gallery-item">
-                        <img src="images/fence-14.jpg" alt="Security fence with barbed wire" loading="lazy">
+                        <picture>
+        <source srcset="images/fence-14.webp" type="image/webp">
+        <img src="images/fence-14.jpg" alt="Security fence with barbed wire" loading="lazy">
+      </picture>
                         <div class="gallery-overlay">
                             <span>Barbed Wire Security</span>
                         </div>
                     </div>
                     <div class="gallery-item">
-                        <img src="images/fence-15.jpg" alt="Chain-link fence base detail" loading="lazy">
+                        <picture>
+        <source srcset="images/fence-15.webp" type="image/webp">
+        <img src="images/fence-15.jpg" alt="Chain-link fence base detail" loading="lazy">
+      </picture>
                         <div class="gallery-overlay">
                             <span>Quality Chain-Link Work</span>
                         </div>

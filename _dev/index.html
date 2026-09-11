@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>LF Dev — Playground</title>
+<style>
+  body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; padding: 40px; max-width: 800px; margin: 0 auto; background: #f8f9fa; color: #222; }
+  h1 { color: #1f4e79; border-bottom: 2px solid #1f4e79; padding-bottom: 8px; }
+  h2 { color: #1f4e79; margin-top: 30px; }
+  a { color: #1f4e79; }
+  ul { line-height: 1.8; }
+  .status { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin: 20px 0; }
+  .file { background: #f1f3f5; padding: 8px 12px; border-radius: 4px; font-family: monospace; display: inline-block; margin: 4px; }
+  .label { display: inline-block; min-width: 80px; font-weight: 600; }
+  .ok { color: #2e7d32; }
+  .warn { color: #b8860b; }
+  .pending { color: #c62828; }
+</style>
+</head>
+<body>
+
+<h1>Liberty Fencing — Dev Playground</h1>
+
+<div class="status">
+  <h2>Live URLs (local)</h2>
+  <ul>
+    <li><a href="/index.html">Homepage</a></li>
+    <li><a href="/fence-designer.html">Fence Designer (Estimator)</a> — Google Maps won't load (API key restricted to liberty-fencing.com)</li>
+    <li><a href="/security.html">Security Fencing Page</a></li>
+    <li><a href="/dashboard.html">Admin Dashboard</a></li>
+    <li><a href="/_dev/ux-comparison.html">UX Comparison (Before vs After)</a></li>
+  </ul>
+</div>
+
+<div class="status">
+  <h2>File editing workflow</h2>
+  <p>Tell Mater what you want changed. Mater edits the file. You refresh the page. You see the change.</p>
+  <p><b>Files we can edit:</b></p>
+  <span class="file">index.html</span>
+  <span class="file">fence-designer.html</span>
+  <span class="file">leads-script.gs</span>
+  <span class="file">script.js</span>
+  <span class="file">styles.css</span>
+  <span class="file">privacy.html</span>
+  <span class="file">terms.html</span>
+  <span class="file">security.html</span>
+  <span class="file">dashboard.html</span>
+</div>
+
+<div class="status">
+  <h2>Audit improvements (from earlier today)</h2>
+  <ul>
+    <li><span class="label pending">TODO</span> <b>SEO:</b> Missing sitemap.xml, missing Schema.org LocalBusiness markup</li>
+    <li><span class="label ok">BUILT</span> <b>Estimator UX:</b> Draw-first-then-choose type (see UX comparison)</li>
+    <li><span class="label warn">BUILT</span> <b>Lead pipeline:</b> Estimator leads bridge to main CRM via Apps Script — needs Scott to deploy</li>
+    <li><span class="label ok">LIVE</span> <b>SLA monitoring:</b> Every-30-min breach alert cron (running)</li>
+  </ul>
+</div>
+
+<div class="status">
+  <h2>Git state</h2>
+  <p><b>Currently on branch:</b> master</p>
+  <p><b>Modified files (not yet committed):</b></p>
+  <ul>
+    <li>fence-designer.html — UX reorder (draw-first)</li>
+    <li>leads-script.gs — Bridge to main CRM</li>
+  </ul>
+  <p><b>Last deploy to live:</b> <span class="warn">2026-04-02 (6 months ago!)</span></p>
+  <p><b>Live site is:</b> s10s-btc/liberty-fencing-website built from commit ad9867b</p>
+  <p><b>To deploy:</b> Scott merges to s10s-btc, or Coop's origin/master gets re-targeted as the deploy repo</p>
+</div>
+
+<div class="status">
+  <h2>Tell Mater what to change</h2>
+  <p>When you're ready, tell me things like:</p>
+  <ul>
+    <li>"Change the homepage hero copy to say X"</li>
+    <li>"Add a Schema.org LocalBusiness block to index.html"</li>
+    <li>"Make the security page CTA button bigger"</li>
+    <li>"Add a gallery section with 6 photos"</li>
+  </ul>
+  <p>Mater edits the file. You refresh. You see it. We iterate until it's right.</p>
+</div>
+
+</body>
+</html>
