@@ -790,8 +790,8 @@ body {
 
 .founders-grid {
     display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 48px;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 32px;
     margin-top: 48px;
 }
 
@@ -1625,4 +1625,132 @@ select:focus-visible {
         flex: 0 0 280px;
         padding: 24px 20px;
     }
+}
+
+
+/* ─── SERVICES WITH PHOTOS ─────────────────────────────────────── */
+.services-photos-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+    margin-top: 48px;
+}
+
+@media (max-width: 968px) {
+    .services-photos-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 640px) {
+    .services-photos-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.service-photo-card {
+    position: relative;
+    border-radius: 12px;
+    overflow: hidden;
+    aspect-ratio: 4 / 3;
+    text-decoration: none;
+    color: white;
+    display: block;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.service-photo-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 32px rgba(0,0,0,0.15);
+}
+
+.service-photo-card img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: transform 0.4s;
+}
+
+.service-photo-card:hover img {
+    transform: scale(1.05);
+}
+
+.service-photo-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.4) 50%, rgba(0,0,0,0.2) 100%);
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    transition: background 0.3s;
+}
+
+.service-photo-card:hover .service-photo-overlay {
+    background: linear-gradient(to top, rgba(244, 168, 24, 0.9) 0%, rgba(0,0,0,0.6) 60%, rgba(0,0,0,0.3) 100%);
+}
+
+.service-photo-icon {
+    position: absolute;
+    top: 16px;
+    left: 16px;
+    font-size: 1.8rem;
+    background: rgba(255,255,255,0.95);
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+
+.service-photo-overlay h3 {
+    color: white;
+    font-size: 1.3rem;
+    font-weight: 700;
+    margin: 0 0 6px;
+    text-shadow: 0 1px 4px rgba(0,0,0,0.5);
+}
+
+.service-photo-overlay p {
+    color: rgba(255,255,255,0.95);
+    font-size: 0.9rem;
+    line-height: 1.4;
+    margin: 0 0 12px;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+}
+
+.service-photo-link {
+    color: var(--accent, #f4a818);
+    font-size: 0.9rem;
+    font-weight: 600;
+    transition: transform 0.2s;
+}
+
+.service-photo-card:hover .service-photo-link {
+    transform: translateX(4px);
+}
+
+
+/* ─── TEAM SECTION CTA LINE ────────────────────────────────────── */
+.founders-cta-line {
+    text-align: center;
+    margin-top: 32px;
+    padding: 20px;
+    background: #f8f9fa;
+    border-radius: 12px;
+    font-size: 1.05rem;
+    color: var(--text, #333);
+}
+
+.founders-cta-line a {
+    color: var(--accent, #f4a818);
+    text-decoration: none;
+}
+
+.founders-cta-line a:hover {
+    text-decoration: underline;
 }
