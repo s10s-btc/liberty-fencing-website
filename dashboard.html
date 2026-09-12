@@ -297,7 +297,7 @@ function renderLeads() {
   document.getElementById("leads-body").innerHTML = leads.map(l => {
     const status = l.Status || "New";
     const badgeClass = "badge-" + status.toLowerCase().replace(/[^a-z]/g, "");
-    const designLink = l["Design URL"] ? '<a class="link" href="' + l["Design URL"] + '" target="_blank">View</a>' : '-';
+    const designLink = l["Design URL"] ? '<a class="link" href="' + l["Design URL"] + '" target="_blank" rel="noopener noreferrer">View</a>' : '-';
     const value = l["Estimated Value"] ? "$" + Number(l["Estimated Value"]).toLocaleString() : "-";
     return `<tr>
       <td style="white-space:nowrap">${l.Date || ""}</td>
