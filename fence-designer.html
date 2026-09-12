@@ -966,7 +966,36 @@
 <!-- Toast -->
 <div id="toast"></div>
 
-<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyB08H_A4E-vRxfaBMPmE8IM4PUHvkrxGNE&libraries=geometry,geocoding,marker&callback=initMap&loading=async" async defer></script>
+<script>
+    // Maps fallback handler - if Google Maps fails to load, show a graceful fallback
+    function showMapsFallback() {
+      const map = document.getElementById('map');
+      if (!map || document.getElementById('maps-fallback')) return;
+      const fb = document.createElement('div');
+      fb.id = 'maps-fallback';
+      fb.style.cssText = 'position:absolute;inset:0;background:linear-gradient(135deg,#1a1a1a 0%,#2d2d2d 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 20px;text-align:center;color:white;font-family:Inter,system-ui,sans-serif;z-index:10;';
+      fb.innerHTML = '<div style="font-size:4rem;margin-bottom:16px;">&#128222;</div>'
+        + '<h2 style="font-size:1.8rem;margin:0 0 12px;color:#f4a818;">Call us for a free quote</h2>'
+        + '<p style="font-size:1.1rem;margin:0 0 24px;max-width:480px;color:rgba(255,255,255,0.85);">The interactive fence designer is loading slowly. We are happy to walk your property and give you a quote in person &mdash; free of charge.</p>'
+        + '<a href="tel:573-222-0021" style="background:#f4a818;color:#1a1a1a;padding:16px 32px;border-radius:8px;font-weight:700;font-size:1.2rem;text-decoration:none;display:inline-block;margin-bottom:16px;">Call (573) 222-0021</a>'
+        + '<p style="font-size:0.9rem;margin:0;color:rgba(255,255,255,0.6);">Owner picks up: Ryan or Scott</p>';
+      map.appendChild(fb);
+      const panel = document.getElementById('panel');
+      if (panel) panel.style.display = 'none';
+      const intro = document.querySelector('.designer-intro');
+      if (intro) intro.style.display = 'none';
+      // Also hide the address search bar since it won't work without Maps
+      const searchBar = document.getElementById('search-bar');
+      if (searchBar) searchBar.style.display = 'none';
+    }
+    setTimeout(() => {
+      if (typeof google === 'undefined' || typeof google.maps === 'undefined') {
+        console.warn('Google Maps failed to load within 8 seconds - showing fallback');
+        showMapsFallback();
+      }
+    }, 8000);
+  </script>
+  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSy...xGNE&libraries=geometry,geocoding,marker&callback=initMap&loading=async" async defer></script>
 <script>
 'use strict';
 
@@ -1496,6 +1525,10 @@ function renderEstimate() {
 function doSearch() {
   const q = document.getElementById('address-input').value.trim();
   if (!q) return;
+  if (!geocoder) {
+    showToast('Map is still loading — try again in a moment');
+    return;
+  }
   document.getElementById('search-btn').textContent = '…';
   geocoder.geocode({ address: q })
     .then(({ results }) => {
@@ -1520,7 +1553,10 @@ function doSearch() {
 // ─── URL ENCODING / SHARING ───────────────────────────────────────────────────
 function encodeStateToUrl() {
   try {
-    const center = map.getCenter();
+    // Defensive: map might not be loaded yet when called early
+    const center = map && map.getCenter ? map.getCenter() : null;
+    if (!center) return;  // Can't encode without map center
+
     const payload = {
       v: 1,
       c: [parseFloat(center.lat().toFixed(6)), parseFloat(center.lng().toFixed(6)), map.getZoom()],
@@ -1546,7 +1582,11 @@ function loadStateFromUrl() {
     const bytes = Uint8Array.from(atob(hash), c => c.charCodeAt(0));
     const payload = JSON.parse(new TextDecoder().decode(bytes));
     if (payload.v !== 1) return false;
-    if (payload.c) { map.setCenter({ lat: payload.c[0], lng: payload.c[1] }); map.setZoom(payload.c[2]); }
+    // Guard: map may not be ready yet when called from URL restoration
+    if (payload.c && map && typeof map.setCenter === 'function') {
+      map.setCenter({ lat: payload.c[0], lng: payload.c[1] });
+      if (typeof map.setZoom === 'function') map.setZoom(payload.c[2]);
+    }
     for (const sd of (payload.s ?? [])) {
       const cfg = FENCE_TYPES[sd.t];
       if (!cfg) continue;
@@ -1733,7 +1773,10 @@ window.initMap = function () {
     catch { prompt('Copy this link:', window.location.href); }
   });
   document.getElementById('clear-btn').addEventListener('click', () => {
-    if (state.segments.length === 0 && state.gates.length === 0) return;
+    if (state.segments.length === 0 && state.gates.length === 0) {
+      showToast('Nothing to clear — draw a fence first');
+      return;
+    }
     if (!confirm('Clear all fence segments and gates?')) return;
     state.segments.forEach(s => s.polyline.setMap(null));
     state.gates.forEach(g => { if (g.marker) g.marker.map = null; });
