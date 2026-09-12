@@ -119,3 +119,55 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 });
+
+
+// ─── PACKAGES CAROUSEL ────────────────────────────────────────────
+document.querySelectorAll('.package-toggle').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const targetId = btn.dataset.target;
+    const variations = document.getElementById(targetId);
+    if (!variations) return;
+
+    const isOpen = variations.classList.contains('expanded');
+
+    // Close all other expanded packages
+    document.querySelectorAll('.package-variations.expanded').forEach(v => {
+      v.classList.remove('expanded');
+    });
+    document.querySelectorAll('.package-toggle.active').forEach(t => {
+      t.classList.remove('active');
+      const target = t.dataset.target;
+      const variationsEl = document.getElementById(target);
+      const count = variationsEl ? variationsEl.querySelectorAll('.package-variation').length : 0;
+      t.textContent = `See ${count} size${count !== 1 ? 's' : ''}`;
+    });
+
+    // Toggle the clicked one
+    if (!isOpen) {
+      variations.classList.add('expanded');
+      btn.classList.add('active');
+      const count = variations.querySelectorAll('.package-variation').length;
+      btn.textContent = `Hide ${count} sizes`;
+    }
+  });
+});
+
+// Carousel arrows
+const carousel = document.querySelector('.packages-carousel');
+if (carousel) {
+  const track = carousel.querySelector('.packages-track');
+  const leftArrow = carousel.querySelector('.carousel-arrow-left');
+  const rightArrow = carousel.querySelector('.carousel-arrow-right');
+  const cardWidth = 344;
+
+  if (leftArrow && track) {
+    leftArrow.addEventListener('click', () => {
+      track.scrollBy({ left: -cardWidth, behavior: 'smooth' });
+    });
+  }
+  if (rightArrow && track) {
+    rightArrow.addEventListener('click', () => {
+      track.scrollBy({ left: cardWidth, behavior: 'smooth' });
+    });
+  }
+}
