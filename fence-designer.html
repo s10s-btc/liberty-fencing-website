@@ -31,7 +31,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Design Your Fence | Liberty Fencing</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css?v=1789237071">
+    <link rel="stylesheet" href="styles.css?v=1789237275">
   <style>
     :root {
       --primary: #1a1a1a;
@@ -1502,25 +1502,63 @@ function doSearch() {
     showToast('Map is still loading — try again in a moment');
     return;
   }
-  document.getElementById('search-btn').textContent = '…';
-  geocoder.geocode({ address: q })
-    .then(({ results }) => {
-      document.getElementById('search-btn').textContent = 'Find';
-      if (results[0]) {
-        map.setCenter(results[0].geometry.location);
-        map.setZoom(20);
+  if (typeof geocoder.geocode !== 'function') {
+    showToast('Address search unavailable — call (573) 222-0021');
+    return;
+  }
+  const searchBtn = document.getElementById('search-btn');
+  const heroBtn = document.getElementById('designer-hero-btn');
+  if (searchBtn) searchBtn.textContent = '…';
+  if (heroBtn) heroBtn.textContent = '…';
+  
+  let geocodePromise;
+  try {
+    geocodePromise = geocoder.geocode({ address: q });
+  } catch (e) {
+    if (searchBtn) searchBtn.textContent = 'Find';
+    if (heroBtn) heroBtn.textContent = 'Find My Property';
+    showToast('Address search failed — call (573) 222-0021');
+    return;
+  }
+  
+  if (geocodePromise && typeof geocodePromise.then === 'function') {
+    geocodePromise.then(({ results }) => {
+      if (searchBtn) searchBtn.textContent = 'Find';
+      if (heroBtn) heroBtn.textContent = 'Find My Property';
+      if (results && results[0]) {
+        if (map && typeof map.setCenter === 'function') {
+          map.setCenter(results[0].geometry.location);
+          map.setZoom(20);
+        }
         if (window.innerWidth <= 640) {
-          document.getElementById('panel').classList.add('open');
-          setTimeout(() => document.getElementById('panel').classList.remove('open'), 2500);
+          const panel = document.getElementById('panel');
+          if (panel) {
+            panel.classList.add('open');
+            setTimeout(() => panel.classList.remove('open'), 2500);
+          }
         }
       } else {
         showToast('Address not found — try including city and state');
       }
-    })
-    .catch(() => {
-      document.getElementById('search-btn').textContent = 'Find';
-      showToast('Address not found — try including city and state');
+    }).catch(() => {
+      if (searchBtn) searchBtn.textContent = 'Find';
+      if (heroBtn) heroBtn.textContent = 'Find My Property';
+      showToast('Address search failed — call (573) 222-0021');
     });
+  } else {
+    geocoder.geocode({ address: q }, function(results, status) {
+      if (searchBtn) searchBtn.textContent = 'Find';
+      if (heroBtn) heroBtn.textContent = 'Find My Property';
+      if (status === 'OK' && results && results[0]) {
+        if (map && typeof map.setCenter === 'function') {
+          map.setCenter(results[0].geometry.location);
+          map.setZoom(20);
+        }
+      } else {
+        showToast('Address not found — try including city and state');
+      }
+    });
+  }
 }
 
 // ─── URL ENCODING / SHARING ───────────────────────────────────────────────────
