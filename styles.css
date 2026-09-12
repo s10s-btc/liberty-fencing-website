@@ -939,6 +939,8 @@ body {
 }
 
 .cta-section h2 {
-    word-wrap: keep-all;
-    overflow-wrap: break-word;
+    font-size: 2rem;
+    line-height: 1.2;
+    max-width: 800px;
+    margin: 0 auto 1.5rem;
 }
