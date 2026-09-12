@@ -90,7 +90,16 @@ function handleNewLead(data) {
     data.source || "fence_designer"
   ]);
 
-  // Send email notification
+  // CRITICAL: Sync to main CRM. Without this, leads never reach the main spreadsheet.
+  var syncResult = null;
+  try {
+    syncResult = syncToMainCRM(data);
+  } catch (e) {
+    console.error('Main CRM sync failed:', e);
+    syncResult = { error: e.toString() };
+  }
+
+  // Send email notification (include CRM sync status)
   try {
     MailApp.sendEmail({
       to: "ryan120v@gmail.com",
@@ -102,18 +111,11 @@ function handleNewLead(data) {
             "Service: " + (data.service_requested || "") + "\n" +
             "Estimated Value: $" + (data.estimated_value || 0) + "\n" +
             "Description: " + (data.description || "") + "\n" +
-            "Design: " + (data.design && data.design.shareUrl ? data.design.shareUrl : "No design") + "\n"
+            "Design: " + (data.design && data.design.shareUrl ? data.design.shareUrl : "No design") + "\n" +
+            "CRM Sync: " + (syncResult && syncResult.success ? "OK (" + syncResult.leadId + ")" : "FAILED " + (syncResult && syncResult.error || "unknown")) + "\n"
     });
   } catch (emailErr) {
     console.error('Email send failed:', emailErr);
-  }
-
-  // BRIDGE: Sync to main CRM
-  var syncResult = null;
-  try {
-    syncResult = syncToMainCRM(data);
-  } catch (e) {
-    syncResult = { error: e.toString() };
   }
 
   return { success: true, sync: syncResult };
