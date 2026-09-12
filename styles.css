@@ -1754,3 +1754,181 @@ select:focus-visible {
 .founders-cta-line a:hover {
     text-decoration: underline;
 }
+
+
+/* ─── DESIGNER HERO SEARCH BAR (the main entry point) ──────────────────────── */
+
+.designer-hero {
+    background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+    padding: 48px 24px 32px;
+    text-align: center;
+}
+
+.designer-hero-title {
+    font-size: 2.4rem;
+    font-weight: 700;
+    color: var(--primary);
+    margin: 0 0 12px;
+    line-height: 1.15;
+    letter-spacing: -0.02em;
+}
+
+.designer-hero-sub {
+    font-size: 1.1rem;
+    color: var(--text-muted, #555);
+    margin: 0 auto 28px;
+    max-width: 600px;
+    line-height: 1.5;
+}
+
+/* THE HERO SEARCH BAR - big, prominent, centered */
+.designer-search {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: #fff;
+    border: 2px solid var(--accent, #f4a818);
+    border-radius: 14px;
+    padding: 8px 8px 8px 20px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.06);
+    max-width: 720px;
+    margin: 0 auto 16px;
+    transition: box-shadow 0.2s, transform 0.2s;
+}
+
+.designer-search:focus-within {
+    box-shadow: 0 14px 48px rgba(244, 168, 24, 0.25), 0 4px 12px rgba(0, 0, 0, 0.08);
+    transform: translateY(-1px);
+}
+
+.designer-search-icon {
+    color: var(--accent, #f4a818);
+    flex-shrink: 0;
+}
+
+.designer-search input {
+    flex: 1;
+    border: none;
+    outline: none;
+    background: transparent;
+    font-family: inherit;
+    font-size: 1.15rem;
+    padding: 12px 4px;
+    color: var(--text);
+    min-width: 0;
+}
+
+.designer-search input::placeholder {
+    color: #999;
+    font-weight: 400;
+}
+
+.designer-search button {
+    background: var(--accent, #f4a818);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    padding: 14px 28px;
+    font-family: inherit;
+    font-size: 1.05rem;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.2s, transform 0.15s;
+    box-shadow: 0 2px 6px rgba(244, 168, 24, 0.3);
+}
+
+.designer-search button:hover {
+    background: #d8940f;
+    transform: translateY(-1px);
+}
+
+.designer-search button:active {
+    transform: translateY(0);
+}
+
+.designer-hero-trust {
+    font-size: 0.9rem;
+    color: var(--text-muted, #666);
+    margin: 0 auto 24px;
+    max-width: 600px;
+    line-height: 1.5;
+}
+
+/* Inline trust pills - small, horizontal */
+.designer-pills {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.designer-pill {
+    background: rgba(244, 168, 24, 0.08);
+    border: 1px solid rgba(244, 168, 24, 0.25);
+    color: #5a4a08;
+    padding: 6px 14px;
+    border-radius: 999px;
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+/* Mobile - search bar stacks gracefully */
+@media (max-width: 640px) {
+    .designer-hero {
+        padding: 32px 16px 24px;
+    }
+    
+    .designer-hero-title {
+        font-size: 1.7rem;
+        line-height: 1.2;
+    }
+    
+    .designer-hero-sub {
+        font-size: 0.95rem;
+        margin-bottom: 20px;
+    }
+    
+    .designer-search {
+        flex-direction: column;
+        gap: 8px;
+        padding: 12px;
+        border-radius: 12px;
+    }
+    
+    .designer-search-icon {
+        display: none;  /* Hide icon when stacked */
+    }
+    
+    .designer-search input {
+        font-size: 1rem;
+        padding: 10px 12px;
+        width: 100%;
+        text-align: center;
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
+    }
+    
+    .designer-search button {
+        width: 100%;
+        padding: 14px 20px;
+        font-size: 1rem;
+    }
+    
+    .designer-hero-trust {
+        font-size: 0.8rem;
+        padding: 0 8px;
+    }
+    
+    .designer-pill {
+        font-size: 0.78rem;
+        padding: 5px 10px;
+    }
+}
+
+
+
+
+

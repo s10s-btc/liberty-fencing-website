@@ -31,7 +31,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Design Your Fence | Liberty Fencing</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css?v=1789220030">
+    <link rel="stylesheet" href="styles.css?v=1789237071">
   <style>
     :root {
       --primary: #1a1a1a;
@@ -66,18 +66,7 @@
 
     /* ── Search bar ──────────────────────────────────────────────── */
     #search-bar {
-      position: fixed;
-      top: 12px;
-      left: calc(var(--panel-w) + 50%);
-      transform: translateX(-50%);
-      z-index: 1100;
-      display: flex;
-      gap: 6px;
-      background: #fff;
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      padding: 6px;
-      width: min(440px, calc(100vw - var(--panel-w) - 32px));
+      display: none !important;
     }
 
     #address-input {
@@ -766,48 +755,32 @@
     </script>
 </head>
 <body>
-    <!-- Crawlable SEO intro — visible to Google + users without JS -->
-    <section class="designer-intro">
+    <!-- Crawlable SEO intro + BIG SEARCH BAR (the main entry point) -->
+    <section class="designer-hero">
         <div class="container">
-            <h1>Design your fence. See your price. No phone call required.</h1>
-            <p class="designer-intro-lead">The fastest way to get a fence quote in Southeast Missouri. Draw your fence line on a satellite map, pick your material, see your instant estimate. Free on-site walkthrough. Itemized quote in 24 hours. Most installs done in 2–4 days.</p>
+            <h1 class="designer-hero-title">Design your fence. See your price.</h1>
+            <p class="designer-hero-sub">Enter your property address to start drawing your fence line on the satellite map.</p>
 
-            <div class="designer-intro-grid">
-                <div class="designer-intro-card">
-                    <div class="designer-intro-icon">🗺️</div>
-                    <h3>Draw on Satellite</h3>
-                    <p>Sketch your fence line on a real satellite view of your property</p>
-                </div>
-                <div class="designer-intro-card">
-                    <div class="designer-intro-icon">💵</div>
-                    <h3>Instant Pricing</h3>
-                    <p>See your per-foot price live — no phone call, no sales script</p>
-                </div>
-                <div class="designer-intro-card">
-                    <div class="designer-intro-icon">📋</div>
-                    <h3>24-Hour Quote</h3>
-                    <p>Free on-site walkthrough, itemized written quote in 24 hours</p>
-                </div>
-                <div class="designer-intro-card">
-                    <div class="designer-intro-icon">⚡</div>
-                    <h3>2–4 Day Install</h3>
-                    <p>Engine-driven posts. No-dig. Faster than any crew.</p>
-                </div>
+            <!-- HERO SEARCH BAR — the main CTA -->
+            <div class="designer-search">
+                <svg class="designer-search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                    <circle cx="12" cy="10" r="3"></circle>
+                </svg>
+                <input id="designer-hero-input" type="text" placeholder="Enter your property address…" autocomplete="off">
+                <button id="designer-hero-btn">Find My Property</button>
             </div>
+            <p class="designer-hero-trust">No phone call required · Free on-site walkthrough · Itemized quote in 24 hours</p>
 
-            <div class="designer-intro-details">
-                <div class="designer-intro-detail">
-                    <strong>📍 Service area:</strong>
-                    <span>Farmington, Cape Girardeau, Jackson, Sikeston, Poplar Bluff, Perryville, Dexter, Fredericktown, Ste. Genevieve, Park Hills</span>
-                </div>
-                <div class="designer-intro-detail">
-                    <strong>🏗️ Materials:</strong>
-                    <span>Wood privacy (treated pine, cedar), vinyl privacy, chain-link (galvanized or black), aluminum ornamental</span>
-                </div>
+            <!-- Inline trust pills (subtle, horizontal) -->
+            <div class="designer-pills">
+                <span class="designer-pill">📍 Satellite map</span>
+                <span class="designer-pill">💵 Instant pricing</span>
+                <span class="designer-pill">📋 24-hr quote</span>
+                <span class="designer-pill">⚡ 2–4 day install</span>
             </div>
         </div>
     </section>
-
 
 <!-- Search bar -->
 <div id="search-bar">
@@ -1881,5 +1854,29 @@ window.initMap = function () {
   if (!restoredFromUrl) initTutorial();
 };
 </script>
+
+    <script>
+    // Wire up the hero search bar to the existing search function
+    document.addEventListener('DOMContentLoaded', function() {
+        const heroInput = document.getElementById('designer-hero-input');
+        const heroBtn = document.getElementById('designer-hero-btn');
+        const realInput = document.getElementById('address-input');
+        
+        if (heroBtn && heroInput) {
+            function doHeroSearch() {
+                const q = heroInput.value.trim();
+                if (realInput) realInput.value = q;
+                if (typeof doSearch === 'function') {
+                    doSearch();
+                }
+            }
+            
+            heroBtn.addEventListener('click', doHeroSearch);
+            heroInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') doHeroSearch();
+            });
+        }
+    });
+    </script>
 </body>
 </html>
