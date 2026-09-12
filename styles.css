@@ -893,13 +893,12 @@ body {
     color: white;
     text-align: center;}
 
-.payment-section h3 {
-    font-size: 1.1rem;
-    font-weight: 600;
-    margin-bottom: 12px;
+.payment-section .section-title,
+.payment-section h2 {
     color: #f4a818;
 }
 
+.payment-section .section-subtitle,
 .payment-section p {
     font-size: 0.95rem;
     color: rgba(255,255,255,0.85);
@@ -937,4 +936,9 @@ body {
     .founders-section .section-subtitle {
     text-align: center;
     width: 100%;
+}
+
+.cta-section h2 {
+    word-wrap: keep-all;
+    overflow-wrap: break-word;
 }
