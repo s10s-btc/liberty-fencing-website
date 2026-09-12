@@ -43,10 +43,10 @@
       "price_per_ft": 87,
       "color": "#27ae60"
     },
-    "aluminum_pool_4ft": {
+    "aluminum_ornamental": {
       "id": "al005",
       "type": "aluminum",
-      "label": "Pool-code Aluminum 4' (Black)",
+      "label": "Ornamental Aluminum 4 ft",
       "price_per_ft": 59,
       "color": "#2980b9"
     }
@@ -168,7 +168,7 @@
     },
     "aluminum": {
       "icon": "\u2728",
-      "name": "Aluminum Pool-Code 4 ft",
+      "name": "Ornamental Aluminum",
       "tagline": "Architectural look. Never paint, no rust. Manufacturer warranty.",
       "starting_price": 8500,
       "variations": [

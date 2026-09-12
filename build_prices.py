@@ -37,7 +37,7 @@ PLACEHOLDERS = {
     "VN_SINGLE_GATE_PRICE":  ["gates", "vinyl_single", "price"],
     "VN_DOUBLE_GATE_PRICE":  ["gates", "vinyl_double", "price"],
     # Aluminum
-    "AL_PRICE":              ["fences", "aluminum_pool_4ft", "price_per_ft"],
+    "AL_PRICE":              ["fences", "aluminum_ornamental", "price_per_ft"],
     "AL_SINGLE_GATE_PRICE":  ["gates", "aluminum_single", "price"],
     "AL_DOUBLE_GATE_PRICE":  ["gates", "aluminum_double", "price"],
     # Package variations (index.html packages carousel)
