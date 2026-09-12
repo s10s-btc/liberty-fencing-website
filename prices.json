@@ -1,0 +1,368 @@
+{
+  "_meta": {
+    "description": "CENTRAL PRICING SOURCE. Update this file, then run build_prices.py to update all HTML files.",
+    "last_updated": "2026-09-11",
+    "maintained_by": "Coop",
+    "currency": "USD",
+    "notes": "Prices are ballpark estimates. Final pricing confirmed at on-site walkthrough."
+  },
+  "fences": {
+    "chain_link_4ft_galvanized": {
+      "id": "cl004",
+      "type": "chain-link",
+      "label": "Chain-link 4' (Galvanized)",
+      "price_per_ft": 22,
+      "color": "#95a5a6"
+    },
+    "chain_link_4ft_black": {
+      "id": "57c26e7b",
+      "type": "chain-link",
+      "label": "Chain-link 4' (Black)",
+      "price_per_ft": 24,
+      "color": "#333333"
+    },
+    "wood_pine_6ft": {
+      "id": "wp001",
+      "type": "wood_pine",
+      "label": "Wooden Privacy 6' (Treated Pine)",
+      "price_per_ft": 32,
+      "color": "#e67e22"
+    },
+    "wood_cedar_6ft": {
+      "id": "wc002",
+      "type": "wood_cedar",
+      "label": "Cedar Privacy 6' (Cedar)",
+      "price_per_ft": 42,
+      "color": "#c0392b"
+    },
+    "vinyl_white_6ft": {
+      "id": "vn003",
+      "type": "vinyl",
+      "label": "Vinyl Privacy 6' (White)",
+      "price_per_ft": 87,
+      "color": "#27ae60"
+    },
+    "aluminum_pool_4ft": {
+      "id": "al005",
+      "type": "aluminum",
+      "label": "Pool-code Aluminum 4' (Black)",
+      "price_per_ft": 59,
+      "color": "#2980b9"
+    }
+  },
+  "gates": {
+    "chain_link_single": {
+      "id": "gs006",
+      "fence_type": "chain-link",
+      "label": "Chain-link Single Gate",
+      "price": 700
+    },
+    "chain_link_double": {
+      "id": "gd007",
+      "fence_type": "chain-link",
+      "label": "Double/Drive Gate",
+      "price": 1400
+    },
+    "wood_pine_single": {
+      "id": "91766acb",
+      "fence_type": "wood_pine",
+      "label": "Single Gate",
+      "price": 700
+    },
+    "wood_pine_double": {
+      "id": "b316aa85",
+      "fence_type": "wood_pine",
+      "label": "Double/Drive Gate",
+      "price": 1400
+    },
+    "wood_cedar_single": {
+      "id": "1164034c",
+      "fence_type": "wood_cedar",
+      "label": "Single Gate",
+      "price": 900
+    },
+    "wood_cedar_double": {
+      "id": "b63be363",
+      "fence_type": "wood_cedar",
+      "label": "Double/Drive Gate",
+      "price": 1800
+    },
+    "vinyl_single": {
+      "id": "cc8bd072",
+      "fence_type": "vinyl",
+      "label": "Single Gate",
+      "price": 1100
+    },
+    "vinyl_double": {
+      "id": "50845957",
+      "fence_type": "vinyl",
+      "label": "Double/Drive Gate",
+      "price": 2200
+    },
+    "aluminum_single": {
+      "id": "70b8b251",
+      "fence_type": "aluminum",
+      "label": "Single Gate",
+      "price": 1350
+    },
+    "aluminum_double": {
+      "id": "1a1b77bf",
+      "fence_type": "aluminum",
+      "label": "Double/Drive Gate",
+      "price": 2700
+    }
+  },
+  "packages": {
+    "chain-link": {
+      "icon": "\ud83d\udd17",
+      "name": "Chain-Link 4 ft",
+      "tagline": "Most affordable. Galvanized or black vinyl-coated.",
+      "starting_price": 4000,
+      "variations": [
+        {
+          "name": "Basic",
+          "length_ft": 150,
+          "gates": [
+            {
+              "type": "single",
+              "count": 1
+            }
+          ],
+          "price": 4000,
+          "description": "Single walk gate"
+        },
+        {
+          "name": "Standard",
+          "length_ft": 250,
+          "gates": [
+            {
+              "type": "single",
+              "count": 1
+            },
+            {
+              "type": "double",
+              "count": 1
+            }
+          ],
+          "price": 6200,
+          "description": "Walk gate + drive gate"
+        },
+        {
+          "name": "Premium",
+          "length_ft": 400,
+          "gates": [
+            {
+              "type": "single",
+              "count": 2
+            },
+            {
+              "type": "double",
+              "count": 1
+            }
+          ],
+          "price": 9500,
+          "description": "Two walk gates + drive gate"
+        }
+      ]
+    },
+    "aluminum": {
+      "icon": "\u2728",
+      "name": "Aluminum Pool-Code 4 ft",
+      "tagline": "Architectural look. Never paint, no rust. Manufacturer warranty.",
+      "starting_price": 8500,
+      "variations": [
+        {
+          "name": "Basic",
+          "length_ft": 150,
+          "gates": [
+            {
+              "type": "single",
+              "count": 1
+            }
+          ],
+          "price": 8500,
+          "description": "Single walk gate"
+        },
+        {
+          "name": "Premium",
+          "length_ft": 250,
+          "gates": [
+            {
+              "type": "single",
+              "count": 1
+            },
+            {
+              "type": "double",
+              "count": 1
+            }
+          ],
+          "price": 13500,
+          "description": "Walk gate + drive gate"
+        }
+      ]
+    },
+    "wood-pine": {
+      "icon": "\ud83c\udf32",
+      "name": "Wood Privacy 6 ft",
+      "tagline": "Treated pine. Engine-driven posts, no-dig install. Most popular.",
+      "starting_price": 5500,
+      "variations": [
+        {
+          "name": "Basic",
+          "length_ft": 150,
+          "gates": [
+            {
+              "type": "single",
+              "count": 1
+            }
+          ],
+          "price": 5500,
+          "description": "Single walk gate"
+        },
+        {
+          "name": "Standard",
+          "length_ft": 250,
+          "gates": [
+            {
+              "type": "single",
+              "count": 1
+            },
+            {
+              "type": "double",
+              "count": 1
+            }
+          ],
+          "price": 8800,
+          "description": "Walk gate + drive gate"
+        },
+        {
+          "name": "Premium",
+          "length_ft": 400,
+          "gates": [
+            {
+              "type": "single",
+              "count": 2
+            },
+            {
+              "type": "double",
+              "count": 1
+            }
+          ],
+          "price": 13800,
+          "description": "Two walk gates + drive gate"
+        }
+      ]
+    },
+    "vinyl": {
+      "icon": "\ud83c\udfe0",
+      "name": "Vinyl Privacy 6 ft",
+      "tagline": "Zero maintenance. Premium white. Manufacturer warranty.",
+      "starting_price": 14000,
+      "variations": [
+        {
+          "name": "Basic",
+          "length_ft": 150,
+          "gates": [
+            {
+              "type": "single",
+              "count": 1
+            }
+          ],
+          "price": 14000,
+          "description": "Single walk gate"
+        },
+        {
+          "name": "Standard",
+          "length_ft": 250,
+          "gates": [
+            {
+              "type": "single",
+              "count": 1
+            },
+            {
+              "type": "double",
+              "count": 1
+            }
+          ],
+          "price": 22500,
+          "description": "Walk gate + drive gate"
+        }
+      ]
+    },
+    "commercial": {
+      "icon": "\ud83c\udfe2",
+      "name": "Commercial Security",
+      "tagline": "Anti-climb mesh. Insurance-compliant. Heavy-duty.",
+      "starting_price": 12000,
+      "price_per_ft_range": "$30-60/LF depending on specs",
+      "variations": [
+        {
+          "name": "Standard",
+          "length_ft": 200,
+          "gates": [
+            {
+              "type": "vehicle",
+              "count": 1
+            }
+          ],
+          "price": 12000,
+          "description": "Single vehicle gate"
+        },
+        {
+          "name": "Premium",
+          "length_ft": 400,
+          "gates": [
+            {
+              "type": "slide",
+              "count": 1
+            },
+            {
+              "type": "single",
+              "count": 1
+            }
+          ],
+          "price": 22000,
+          "description": "Slide gate + walk gate"
+        }
+      ]
+    }
+  },
+  "service_display": {
+    "chain-link": {
+      "starting_price_text": "From $22/LF",
+      "color": "#95a5a6",
+      "icon": "\ud83d\udd17"
+    },
+    "wood-privacy": {
+      "starting_price_text": "From $32/LF",
+      "color": "#8b4513",
+      "icon": "\ud83c\udf32"
+    },
+    "vinyl": {
+      "starting_price_text": "From $87/LF",
+      "color": "#27ae60",
+      "icon": "\ud83c\udfe0"
+    },
+    "aluminum": {
+      "starting_price_text": "From $59/LF",
+      "color": "#2980b9",
+      "icon": "\u269c\ufe0f"
+    },
+    "commercial": {
+      "starting_price_text": "Insurance-spec",
+      "color": "#c9a84c",
+      "icon": "\ud83c\udfe2"
+    },
+    "repairs": {
+      "starting_price_text": "Get a quote",
+      "color": "#666",
+      "icon": "\ud83d\udd27"
+    }
+  },
+  "business": {
+    "deposit_default": 2000,
+    "google_review_url": "https://g.page/r/CSdGMYGNpoW0EBM",
+    "currency": "USD",
+    "price_range": "$$"
+  }
+}
