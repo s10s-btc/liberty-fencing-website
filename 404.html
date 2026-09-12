@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex">
+    <title>Page Not Found | Liberty Fencing</title>
+    <link rel="stylesheet" href="styles.css?v=1789215476">
+    <link rel="icon" href="logo.jpg" type="image/jpeg">
+    <style>
+        .error-page {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, var(--bg, #fff) 0%, var(--bg-alt, #f8f9fa) 100%);
+            padding: 40px 20px;
+        }
+        .error-content {
+            max-width: 600px;
+            text-align: center;
+        }
+        .error-code {
+            font-size: 8rem;
+            font-weight: 800;
+            color: var(--accent, #f4a818);
+            line-height: 1;
+            margin-bottom: 1rem;
+        }
+        .error-title {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--primary, #1a1a1a);
+            margin-bottom: 1rem;
+        }
+        .error-message {
+            font-size: 1.1rem;
+            color: var(--text-light, #666);
+            line-height: 1.6;
+            margin-bottom: 2rem;
+        }
+        .error-actions {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .error-search {
+            max-width: 500px;
+            margin: 2rem auto;
+        }
+        .error-search input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid var(--border, #e0e0e0);
+            border-radius: 8px;
+            font-size: 1rem;
+            background: white;
+        }
+        .error-links {
+            margin-top: 2rem;
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+            flex-wrap: wrap;
+            color: var(--text-light, #666);
+            font-size: 0.9rem;
+        }
+        .error-links a {
+            color: var(--accent, #f4a818);
+            text-decoration: none;
+        }
+        .error-links a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="error-page">
+        <div class="error-content">
+            <div class="error-code">404</div>
+            <h1 class="error-title">Page not found</h1>
+            <p class="error-message">
+                The page you're looking for doesn't exist or has been moved.
+                But we can still help you get a fence quote — try one of these:
+            </p>
+            <div class="error-actions">
+                <a href="/" class="btn btn-primary btn-large">← Back to Home</a>
+                <a href="./fence-designer.html" class="btn btn-secondary btn-large">🗺️ Design My Fence</a>
+                <a href="tel:573-222-0021" class="btn btn-secondary btn-large">📞 Call 573-222-0021</a>
+            </div>
+            <div class="error-search">
+                <input type="search" id="site-search" placeholder="Search our site..." aria-label="Search">
+            </div>
+            <div class="error-links">
+                Popular: <a href="chain-link-fence-farmington-mo.html">Chain-Link</a> ·
+                <a href="wood-privacy-fence-farmington-mo.html">Wood Privacy</a> ·
+                <a href="vinyl-fence-farmington-mo.html">Vinyl</a> ·
+                <a href="aluminum-fence-farmington-mo.html">Aluminum</a> ·
+                <a href="commercial-fence-farmington-mo.html">Commercial</a> ·
+                <a href="/#faq">FAQ</a>
+            </div>
+        </div>
+    </div>
+    <script>
+        // Simple search that filters the error-links
+        document.getElementById('site-search').addEventListener('input', function(e) {
+            const query = e.target.value.toLowerCase();
+            const links = document.querySelectorAll('.error-links a');
+            links.forEach(link => {
+                const text = link.textContent.toLowerCase();
+                link.style.display = text.includes(query) || query === '' ? '' : 'none';
+            });
+        });
+    </script>
+</body>
+</html>

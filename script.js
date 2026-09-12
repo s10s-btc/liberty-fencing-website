@@ -1,57 +1,98 @@
 // Liberty Fencing Website JavaScript
 
 document.addEventListener('DOMContentLoaded', function() {
-    // Mobile menu toggle
+    // Mobile menu toggle with backdrop + ESC + click-outside
     const mobileMenuToggle = document.querySelector('.mobile-menu-toggle');
     const navMenu = document.querySelector('.nav-menu');
-    
-    if (mobileMenuToggle) {
-        mobileMenuToggle.addEventListener('click', function() {
-            navMenu.classList.toggle('active');
-            mobileMenuToggle.classList.toggle('active');
+    const body = document.body;
+
+    function openMenu() {
+        navMenu.classList.add('active');
+        mobileMenuToggle.classList.add('active');
+        mobileMenuToggle.setAttribute('aria-expanded', 'true');
+        mobileMenuToggle.setAttribute('aria-label', 'Close menu');
+        // Create backdrop if doesn't exist
+        let backdrop = document.querySelector('.menu-backdrop');
+        if (!backdrop) {
+            backdrop = document.createElement('div');
+            backdrop.className = 'menu-backdrop';
+            document.body.appendChild(backdrop);
+            backdrop.addEventListener('click', closeMenu);
+        }
+        // Show backdrop
+        requestAnimationFrame(() => backdrop.classList.add('show'));
+        body.classList.add('menu-open');
+    }
+
+    function closeMenu() {
+        navMenu.classList.remove('active');
+        mobileMenuToggle.classList.remove('active');
+        mobileMenuToggle.setAttribute('aria-expanded', 'false');
+        mobileMenuToggle.setAttribute('aria-label', 'Open menu');
+        const backdrop = document.querySelector('.menu-backdrop');
+        if (backdrop) backdrop.classList.remove('show');
+        body.classList.remove('menu-open');
+    }
+
+    if (mobileMenuToggle && navMenu) {
+        mobileMenuToggle.addEventListener('click', function(e) {
+            e.stopPropagation();
+            if (navMenu.classList.contains('active')) {
+                closeMenu();
+            } else {
+                openMenu();
+            }
+        });
+
+        // ESC key closes
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && navMenu.classList.contains('active')) {
+                closeMenu();
+            }
         });
     }
-    
+
     // Smooth scroll for navigation links
     document.querySelectorAll('a[href^="#"]').forEach(anchor => {
         anchor.addEventListener('click', function(e) {
-            e.preventDefault();
             const target = document.querySelector(this.getAttribute('href'));
             if (target) {
+                e.preventDefault();
                 target.scrollIntoView({
                     behavior: 'smooth',
                     block: 'start'
                 });
                 // Close mobile menu if open
-                navMenu.classList.remove('active');
-                mobileMenuToggle.classList.remove('active');
+                if (navMenu && navMenu.classList.contains('active')) {
+                    closeMenu();
+                }
             }
         });
     });
-    
+
     // Navbar background on scroll
     const navbar = document.querySelector('.navbar');
     let lastScroll = 0;
-    
+
     window.addEventListener('scroll', function() {
         const currentScroll = window.pageYOffset;
-        
+
         if (currentScroll > 100) {
             navbar.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)';
         } else {
             navbar.style.boxShadow = 'none';
         }
-        
+
         lastScroll = currentScroll;
     });
-    
+
     // Add animation on scroll
     const observerOptions = {
         root: null,
         rootMargin: '0px',
         threshold: 0.1
     };
-    
+
     const observer = new IntersectionObserver(function(entries) {
         entries.forEach(entry => {
             if (entry.isIntersecting) {
@@ -59,9 +100,22 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }, observerOptions);
-    
+
     // Observe service cards
     document.querySelectorAll('.service-card').forEach(card => {
         observer.observe(card);
     });
+
+    // FAQ expand/collapse all
+    const faqExpandAll = document.querySelector('.faq-expand-all');
+    if (faqExpandAll) {
+        faqExpandAll.addEventListener('click', function() {
+            const allItems = document.querySelectorAll('.faq-item');
+            const anyClosed = Array.from(allItems).some(item => !item.open);
+            allItems.forEach(item => {
+                item.open = anyClosed;
+            });
+            this.textContent = anyClosed ? 'Collapse all' : 'Expand all';
+        });
+    }
 });
