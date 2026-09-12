@@ -1,10 +1,11 @@
 {
   "_meta": {
     "description": "CENTRAL PRICING SOURCE. Update this file, then run build_prices.py to update all HTML files.",
-    "last_updated": "2026-09-11",
+    "last_updated": "2026-09-12",
     "maintained_by": "Coop",
     "currency": "USD",
-    "notes": "Prices are ballpark estimates. Final pricing confirmed at on-site walkthrough."
+    "notes": "Prices are ballpark estimates. Final pricing confirmed at on-site walkthrough.",
+    "note": "Commercial package removed - all commercial work quotes via /commercial.html"
   },
   "fences": {
     "chain_link_4ft_galvanized": {
@@ -286,43 +287,6 @@
           ],
           "price": 22500,
           "description": "Walk gate + drive gate"
-        }
-      ]
-    },
-    "commercial": {
-      "icon": "\ud83c\udfe2",
-      "name": "Commercial Security",
-      "tagline": "Anti-climb mesh. Insurance-compliant. Heavy-duty.",
-      "starting_price": 12000,
-      "price_per_ft_range": "$30-60/LF depending on specs",
-      "variations": [
-        {
-          "name": "Standard",
-          "length_ft": 200,
-          "gates": [
-            {
-              "type": "vehicle",
-              "count": 1
-            }
-          ],
-          "price": 12000,
-          "description": "Single vehicle gate"
-        },
-        {
-          "name": "Premium",
-          "length_ft": 400,
-          "gates": [
-            {
-              "type": "slide",
-              "count": 1
-            },
-            {
-              "type": "single",
-              "count": 1
-            }
-          ],
-          "price": 22000,
-          "description": "Slide gate + walk gate"
         }
       ]
     }

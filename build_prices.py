@@ -52,9 +52,7 @@ PLACEHOLDERS = {
     "PKG_WP_PREMIUM_PRICE":  ["packages", "wood-pine", "variations", 2, "price"],
     "PKG_VN_BASIC_PRICE":    ["packages", "vinyl", "variations", 0, "price"],
     "PKG_VN_STANDARD_PRICE": ["packages", "vinyl", "variations", 1, "price"],
-    "PKG_CO_STANDARD_PRICE": ["packages", "commercial", "variations", 0, "price"],
-    "PKG_CO_PREMIUM_PRICE":  ["packages", "commercial", "variations", 1, "price"],
-}
+    }
 
 # Suffix to add (/LF for per-foot prices, nothing for gate/total prices)
 SUFFIXES = {
