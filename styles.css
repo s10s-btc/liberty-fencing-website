@@ -1047,3 +1047,124 @@ body {
         padding: 0 1.25rem 1rem;
     }
 }
+
+
+/* ─── SERVICE LANDING PAGES ──────────────────────────────────────── */
+.service-hero {
+    min-height: 70vh;
+    padding: 8rem 2rem 4rem;
+}
+
+.service-intro .service-content {
+    display: grid;
+    grid-template-columns: 1.5fr 1fr;
+    gap: 48px;
+    align-items: center;
+}
+
+@media (max-width: 768px) {
+    .service-intro .service-content {
+        grid-template-columns: 1fr;
+        gap: 32px;
+    }
+}
+
+.service-text h2 {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+    color: var(--primary, #1a1a1a);
+}
+
+.service-text p {
+    font-size: 1.05rem;
+    line-height: 1.7;
+    color: var(--text-light, #666);
+    margin-bottom: 1rem;
+}
+
+.service-text h3 {
+    font-size: 1.3rem;
+    font-weight: 600;
+    margin-top: 1.5rem;
+    margin-bottom: 1rem;
+    color: var(--primary, #1a1a1a);
+}
+
+.benefits-list {
+    list-style: none;
+    padding: 0;
+}
+
+.benefits-list li {
+    position: relative;
+    padding-left: 32px;
+    margin-bottom: 0.75rem;
+    font-size: 1rem;
+    line-height: 1.6;
+    color: var(--text, #333);
+}
+
+.benefits-list li::before {
+    content: '✓';
+    position: absolute;
+    left: 0;
+    top: 0;
+    color: var(--accent, #f4a818);
+    font-weight: 700;
+    font-size: 1.2rem;
+}
+
+.service-image img {
+    width: 100%;
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+}
+
+.service-cta-section {
+    background: linear-gradient(135deg, #1f4e79 0%, #2d6ba8 100%);
+    color: white;
+    text-align: center;
+    padding: 60px 24px;
+}
+
+.service-cta-section h2 {
+    color: white;
+    margin-bottom: 1rem;
+}
+
+.service-cta-section p {
+    color: rgba(255,255,255,0.9);
+    margin-bottom: 1.5rem;
+    max-width: 600px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.service-cta-section .cta-alternative p {
+    color: rgba(255,255,255,0.85);
+    margin-top: 1.5rem;
+}
+
+
+.service-learn-more {
+    display: inline-block;
+    margin-top: 1rem;
+    color: var(--accent, #f4a818);
+    font-weight: 600;
+    text-decoration: none;
+    font-size: 0.95rem;
+    transition: color 0.2s, transform 0.2s;
+}
+
+.service-learn-more:hover {
+    color: var(--primary, #1a1a1a);
+    transform: translateX(4px);
+}
+
+.service-hero .hero-title {
+    font-size: 2.5rem;
+    line-height: 1.2;
+    max-width: 900px;
+    margin: 0 auto 1.5rem;
+}
