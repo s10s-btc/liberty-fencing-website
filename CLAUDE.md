@@ -10,29 +10,11 @@ Liberty Fencing is a **zero-dependency static website** — pure HTML, CSS, and 
 
 No build step required. To preview locally, open any `.html` file in a browser directly. The fence designer requires a live Google Maps API key to function.
 
-**Deployment:** Automatic via GitHub Actions (`.github/workflows/static.yml`) on push to `master`.
-
-> Note: The deploy workflow references the `master` branch correctly.
+**Deployment:** `www.liberty-fencing.com` is served by a Cloudflare Worker (`liberty-fencing-website`, Git-connected via Cloudflare Workers Builds), which builds from this repo's `master` branch directly — pushing to `master` deploys to production. `.github/workflows/static.yml` also exists and deploys to GitHub Pages on push to `master`, but GitHub Pages is not in the production serving path.
 
 ## Architecture
 
-**Multi-page static site** with a main landing page and several standalone pages:
-
-- `index.html` — Main landing page with anchor-based navigation: `#services`, `#gallery`, `#about`, `#areas`, `#quote`
-- `fence-designer.html` — Interactive fence drawing tool with Google Maps (satellite), real-time pricing, and lead capture
-- `security.html` — Premium security fencing landing page (Navy/gold color scheme, Playfair Display font)
-- `privacy.html` — Privacy policy and SMS consent disclosures
-- `terms.html` — Terms and conditions
-
-**Shared assets:**
-- `styles.css` — Styling for `index.html` using CSS custom properties for theming
-- `script.js` — Smooth scroll, mobile menu toggle, Intersection Observer animations (used by `index.html`)
-- `images/` — `fence-1.jpg` through `fence-15.jpg` (gallery photos)
-- `logo.jpg` — Company logo
-
-**Config:**
-- `wrangler.jsonc` — Cloudflare Workers config (present but not actively deployed)
-- `.github/workflows/static.yml` — GitHub Pages deployment workflow
+**Multi-page static site** with a main landing page and several standalone pages.
 
 ## CSS Conventions
 
@@ -61,7 +43,7 @@ Backend logic for both lead intake and the admin dashboard (`dashboard.html`) li
 | Google Maps JS API | Satellite maps, geometry, address autocomplete in fence designer |
 | Google Apps Script (`leads-script.gs`) | Lead intake + pricing data — reads/writes a Google Sheet, backs the fence designer and `dashboard.html` |
 | Twilio | SMS delivery for appointment/follow-up messages (referenced in privacy policy) |
-| GitHub Pages | Static hosting via GitHub Actions, fronted by Cloudflare (proxied DNS — edge cache may need manual purge after deploy) |
+| Cloudflare Workers | Production hosting — Git-connected Workers Builds project, deploys from `master` on every push |
 
 ## Quote / Estimate Section
 
