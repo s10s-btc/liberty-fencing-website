@@ -726,6 +726,25 @@
             font-style: italic;
         }
 
+        .form-alternate {
+            text-align: center;
+            font-size: 0.78rem;
+            color: var(--steel);
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid rgba(255, 255, 255, 0.12);
+        }
+
+        .form-alternate a {
+            color: var(--gold);
+            font-weight: 700;
+            text-decoration: none;
+        }
+
+        .form-alternate a:hover {
+            text-decoration: underline;
+        }
+
         .success-msg {
             display: none;
             text-align: center;
@@ -846,14 +865,8 @@
     </style>
 
 
-    <!-- Google Analytics (gtag.js) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-PLACEHOLDER-LF"></script>
-    <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
-      gtag('config', 'G-PLACEHOLDER-LF');
-    </script>
+    <!-- Google Analytics (gtag.js) — ID lives in analytics.js, one place to edit -->
+    <script src="analytics.js?v=1"></script>
 </head>
 <body>
 
@@ -1134,6 +1147,10 @@
                         <input type="tel" id="phone" placeholder="(573) 555-0100">
                     </div>
                     <div class="form-group">
+                        <label>Email <span style="font-weight:400;text-transform:none;letter-spacing:0;font-style:italic;">(for your written recommendation)</span></label>
+                        <input type="email" id="email" placeholder="you@company.com">
+                    </div>
+                    <div class="form-group">
                         <label>Property Address</label>
                         <input type="text" id="address" placeholder="123 Industrial Dr, Cape Girardeau, MO">
                     </div>
@@ -1156,6 +1173,7 @@
                     </div>
                     <button class="submit-btn" onclick="handleSubmit()">Request My Free Assessment</button>
                     <div class="form-guarantee">✦ No spam &nbsp;·&nbsp; ✦ No obligation &nbsp;·&nbsp; ✦ Response within 1 business day</div>
+                    <div class="form-alternate">Prefer to talk it through? Call <a href="tel:573-222-0021">573-222-0021</a> &mdash; Mon&ndash;Fri 7am&ndash;6pm, Sat 8am&ndash;4pm</div>
                 </div>
 
                 <div class="success-msg" id="success">
@@ -1188,12 +1206,18 @@
         const fname = document.getElementById('fname').value.trim();
         const lname = document.getElementById('lname').value.trim();
         const phone = document.getElementById('phone').value.trim();
+        const email = document.getElementById('email').value.trim();
         const address = document.getElementById('address').value.trim();
         const ptype = document.getElementById('ptype').value.trim();
         const notes = document.getElementById('notes').value.trim();
 
         if (!fname || !phone || !address) {
             alert('Please fill in your name, phone number, and property address.');
+            return;
+        }
+
+        if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+            alert('Please check the email address — it looks incomplete.');
             return;
         }
 
@@ -1206,7 +1230,7 @@
         const payload = {
             name: (fname + ' ' + lname).trim(),
             phone: phone,
-            email: '',  // not collected on this form
+            email: email,  // collected on this form since 2026-11-04
             service_requested: ptype || 'Commercial / Commercial Assessment',
             description: 'Property: ' + address + (notes ? '\n\nNotes: ' + notes : ''),
             estimated_value: '',
